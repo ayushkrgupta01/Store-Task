@@ -58,35 +58,50 @@ const StoreForm = () => {
     }),
     onSubmit: async (values, { resetForm }) => {
       try {
-        const formData = new FormData();
+        // const formData = new FormData();
 
-        // Append all values except files
-        Object.keys(values).forEach((key) => {
-          if (
-            key !== "panNumberAttachment" &&
-            key !== "aadharNumberAttachment" &&
-            values[key] !== null
-          ) {
-            formData.append(key, values[key]);
-          }
-        });
+        // // Append all values except files
+        // Object.keys(values).forEach((key) => {
+        //   if (
+        //     key !== "panNumberAttachment" &&
+        //     key !== "aadharNumberAttachment" &&
+        //     values[key] !== null
+        //   ) {
+        //     formData.append(key, values[key]);
+        //   }
+        // });
 
-        // Append files separately
-        if (values.panNumberAttachment) {
-          formData.append("panNumberAttachment", panCard);
-        }
-        if (values.aadharNumberAttachment) {
-          formData.append("aadharNumberAttachment", aadharCard);
-        }
-
-        const response = await axios.post(`${process.env.NEXT_PUBLIC_STORE_URL}/ManageStore`
-          ,
-          formData
+        // // Append files separately
+        // if (values.panNumberAttachment) {
+        //   formData.append("panNumberAttachment", panCard);
+        // }
+        // if (values.aadharNumberAttachment) {
+        //   formData.append("aadharNumberAttachment", aadharCard);
+        // }
+        var storeObject = {
+          StoreName: values.storeName,
+          Email: values.email,
+          Phone: values.phone,
+          Address: values.address,
+          CountryId: values.country,
+          StateId: values.state,
+          CityId: values.city,
+          PanNumber: values.panNumber,
+          PanNumberAttachment: panCard,
+          AadharNumber: values.aadharNumber,
+          AadharNumberAttachment: aadharCard,
+        };
+        const response = await axios.post(
+          `${process.env.NEXT_PUBLIC_STORE_URL}/ManageStore`,
+          storeObject
           // Removed manual headers - let browser set multipart boundary
         );
-
-        toast.success("Form submitted successfully!");
-        resetForm();
+        if (response.data[0].status == "1") {
+          toast.success(response.data[0].message);
+          resetForm();
+        }else{
+          toast.error(response.data[0].message);
+        }
       } catch (error) {
         console.error("Form submission error:", error);
         toast.error(
