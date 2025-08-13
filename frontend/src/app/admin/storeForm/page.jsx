@@ -21,58 +21,8 @@ const StoreForm = () => {
   const [countries, setCountries] = useState([]);
   const [states, setStates] = useState([]);
   const [cities, setCities] = useState([]);
-
-  const [selectedCountry, setSelectedCountry] = useState("");
-  const [selectedState, setSelectedState] = useState("");
-
-  useEffect(() => {
-    const fetchCountries = async () => {
-      try {
-        const response = await axios.get(process.env.NEXT_PUBLIC_COUNTRIES_URL);
-        setCountries(response.data);
-      } catch (error) {
-        console.error("Error fetching countries:", error);
-        toast.error("Failed to load countries.");
-      }
-    };
-    fetchCountries();
-  }, []);
-
-  useEffect(() => {
-    const fetchStates = async () => {
-      
-      if (selectedCountry) {
-        try {
-          const response = await axios.get(
-            `${process.env.NEXT_PUBLIC_STATES_URL}?CountryId=${selectedCountry}`
-          );
-          setStates(response.data);
-        } catch (error) {
-          console.error("Error fetching states:", error);
-          toast.error("Failed to load states.");
-        }
-      }
-    };
-    fetchStates();
-  }, [selectedCountry]);
-
-  useEffect(() => {
-    const fetchCities = async () => {
-      if (selectedState) {
-        try {
-          const response = await axios.get(
-            `${process.env.NEXT_PUBLIC_CITIES_URL}?StateId=${selectedState}`
-          );
-          setCities(response.data);
-        } catch (error) {
-          console.error("Error fetching cities:", error);
-          toast.error("Failed to load cities.");
-        }
-      }
-    };
-    fetchCities();
-  }, [selectedState]);
-
+  const [aadharCard, setaadharCard] = useState("");
+  const [panCard, setpanCard] = useState("");
   const formik = useFormik({
     initialValues: {
       storeName: "",
@@ -82,7 +32,6 @@ const StoreForm = () => {
       country: "",
       state: "",
       city: "",
-      zipCode: "",
       panNumber: "",
       panNumberAttachment: null,
       aadharNumber: "",
@@ -98,7 +47,6 @@ const StoreForm = () => {
       country: Yup.string().required("Country is required"),
       state: Yup.string().required("State is required"),
       city: Yup.string().required("City is required"),
-      zipCode: Yup.string().required("Zip code is required"),
       panNumber: Yup.string().required("PAN number is required"),
       panNumberAttachment: Yup.mixed().required(
         "PAN number attachment is required"
@@ -111,33 +59,169 @@ const StoreForm = () => {
     onSubmit: async (values, { resetForm }) => {
       try {
         const formData = new FormData();
+
+        // Append all values except files
         Object.keys(values).forEach((key) => {
-          formData.append(key, values[key]);
+          if (
+            key !== "panNumberAttachment" &&
+            key !== "aadharNumberAttachment" &&
+            values[key] !== null
+          ) {
+            formData.append(key, values[key]);
+          }
         });
 
-        const response = await axios.post(
-          process.env.NEXT_PUBLIC_STORE_URL,
-          formData,
-          {
-            headers: {
-              "Content-Type": "multipart/form-data",
-            },
-          }
+        // Append files separately
+        if (values.panNumberAttachment) {
+          formData.append("panNumberAttachment", panCard);
+        }
+        if (values.aadharNumberAttachment) {
+          formData.append("aadharNumberAttachment", aadharCard);
+        }
+
+        const response = await axios.post(`${process.env.NEXT_PUBLIC_STORE_URL}/ManageStore`
+          ,
+          formData
+          // Removed manual headers - let browser set multipart boundary
         );
 
         toast.success("Form submitted successfully!");
         resetForm();
       } catch (error) {
-        console.error("Error submitting form:", error);
-        toast.error("Failed to submit form. Please try again.");
+        console.error("Form submission error:", error);
+        toast.error(
+          `Submission failed: ${error.response?.data?.message || error.message}`
+        );
       }
     },
   });
 
+  // Effect to fetch countries on initial load
+  useEffect(() => {
+    const fetchCountries = async () => {
+      try {
+        const response = await axios.get(process.env.NEXT_PUBLIC_COUNTRIES_URL);
+        setCountries(response.data);
+      } catch (error) {
+        console.error("Error fetching countries:", error);
+        toast.error("Failed to load countries.");
+      }
+    };
+    fetchCountries();
+  }, []);
+
+  // Effect to fetch states when a country is selected
+  useEffect(() => {
+    const countryId = formik.values.country;
+    if (countryId) {
+      axios
+        .get(`${process.env.NEXT_PUBLIC_STATES_URL}?CountryId=${countryId}`)
+        .then((response) => {
+          setStates(response.data);
+          formik.setFieldValue("state", "");
+          formik.setFieldValue("city", "");
+          setCities([]);
+        })
+        .catch((error) => {
+          console.error("Error fetching states:", error);
+          toast.error("Failed to load states.");
+        });
+    } else {
+      setStates([]);
+      setCities([]);
+      formik.setFieldValue("state", "");
+      formik.setFieldValue("city", "");
+    }
+  }, [formik.values.country]);
+
+  // Effect to fetch cities when a state is selected
+  useEffect(() => {
+    const stateId = formik.values.state;
+    if (stateId) {
+      axios
+        .get(`${process.env.NEXT_PUBLIC_CITIES_URL}?StateId=${stateId}`)
+        .then((response) => {
+          setCities(response.data);
+          formik.setFieldValue("city", "");
+        })
+        .catch((error) => {
+          console.error("Error fetching cities:", error);
+          toast.error("Failed to load cities.");
+        });
+    } else {
+      setCities([]);
+      formik.setFieldValue("city", "");
+    }
+  }, [formik.values.state]);
+
   const handleFileChange = (e, fieldName) => {
     formik.setFieldValue(fieldName, e.currentTarget.files[0]);
   };
+  const handleFileUploadChange = async (e, uploadtype) => {
+    const file = e.target.files[0] || null;
+    const field =
+      uploadtype === "Pan" ? "panNumberAttachment" : "aadharNumberAttachment";
+    // Make Formik aware this field has been interacted with
+    formik.setFieldTouched(field, true, false);
+    // No file selected
+    if (!file) {
+      formik.setFieldError(field, "Please select an image file.");
+      return;
+    }
 
+    // Frontend validation
+    const allowedTypes = ["image/jpeg", "image/png", "image/gif"];
+
+    if (!allowedTypes.includes(file.type)) {
+      formik.setFieldError(
+        field,
+        "Invalid file type. Only JPG, PNG, GIF allowed."
+      );
+      e.target.value = "";
+      return;
+    }
+    if (file.size > 1 * 1024 * 1024) {
+      // 1MB
+      formik.setFieldError(field, "File too large. Max size is 1MB.");
+      e.target.value = "";
+      return;
+    }
+
+    // Clear any previous error before uploading
+    formik.setFieldError(field, undefined);
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("uploadtype", uploadtype);
+
+    try {
+      const res = await axios.post(
+        `${process.env.NEXT_PUBLIC_STORE_URL}/PostUserImage`,
+        formData
+        // ,
+        // { headers: { "Content-Type": "multipart/form-data" } }
+      );
+
+      if (res.data?.success && res.data?.fileName) {
+        // Save server file name to both local state (if you need it) and Formik
+        if (uploadtype === "Aadhar") {
+          setaadharCard(res.data.fileName);
+        } else {
+          setpanCard(res.data.fileName);
+        }
+        // Store the filename so Yup .required() passes and errors disappear
+        formik.setFieldValue(field, res.data.fileName, true);
+        toast.success(`${uploadtype} image uploaded`);
+      } else {
+        formik.setFieldError(field, res.data?.error || "Upload failed.");
+      }
+    } catch (err) {
+      formik.setFieldError(
+        field,
+        err?.response?.data?.error || err.message || "Upload failed."
+      );
+    }
+  };
   return (
     <div className="p-4 min-h-screen">
       <h1 className="text-2xl md:text-3xl font-bold mb-6">Open a New Store</h1>
@@ -168,6 +252,16 @@ const StoreForm = () => {
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => handleFileUploadChange(e, "Aadhar")}
+            /> */}
+            {/* <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => handleFileUploadChange(e, "Pan")}
+            /> */}
             <div>
               <label
                 htmlFor="email"
@@ -245,14 +339,7 @@ const StoreForm = () => {
             <select
               name="country"
               id="country"
-              onChange={(e) => {
-                const country = e.target.value;
-                setSelectedCountry(country);
-                formik.setFieldValue("country", country);
-                formik.setFieldValue("state", "");
-                formik.setFieldValue("city", "");
-                setSelectedState("");
-              }}
+              onChange={formik.handleChange}
               onBlur={formik.handleBlur}
               value={formik.values.country}
               className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring focus:ring-blue-200 outline-none"
@@ -282,12 +369,7 @@ const StoreForm = () => {
             <select
               name="state"
               id="state"
-              onChange={(e) => {
-                const state = e.target.value;
-                setSelectedState(state);
-                formik.setFieldValue("state", state);
-                formik.setFieldValue("city", "");
-              }}
+              onChange={formik.handleChange}
               onBlur={formik.handleBlur}
               value={formik.values.state}
               className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring focus:ring-blue-200 outline-none"
@@ -367,9 +449,8 @@ const StoreForm = () => {
               </label>
               <input
                 type="file"
-                name="panNumberAttachment"
-                id="panNumberAttachment"
-                onChange={(e) => handleFileChange(e, "panNumberAttachment")}
+                accept="image/*"
+                onChange={(e) => handleFileUploadChange(e, "Pan")}
                 className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring focus:ring-blue-200 outline-none"
               />
               {formik.touched.panNumberAttachment &&
@@ -412,9 +493,8 @@ const StoreForm = () => {
               </label>
               <input
                 type="file"
-                name="aadharNumberAttachment"
-                id="aadharNumberAttachment"
-                onChange={(e) => handleFileChange(e, "aadharNumberAttachment")}
+                accept="image/*"
+                onChange={(e) => handleFileUploadChange(e, "Aadhar")}
                 className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring focus:ring-blue-200 outline-none"
               />
               {formik.touched.aadharNumberAttachment &&

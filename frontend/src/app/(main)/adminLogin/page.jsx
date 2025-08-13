@@ -5,24 +5,42 @@ import { Formik, Form, Field, ErrorMessage } from "formik";
 import { FaUserShield, FaLock } from "react-icons/fa";
 import * as Yup from "yup";
 import axios from "axios";
+import { useRouter } from "next/navigation";
 
 const AdminLoginForm = () => {
+  const router = useRouter();
   const initialValues = {
     adminId: "",
     password: "",
   };
 
   const validationSchema = Yup.object({
-    adminId: Yup.string().required("Admin ID is required"),
+    adminId: Yup.string().required("Email ID is required"),
     password: Yup.string().required("Password is required"),
   });
 
   const onSubmit = async (values, { resetForm }) => {
     try {
-      await axios.post("/api/admin/login", values);
-      alert("Admin login successful!");
-      resetForm();
+      const res = await axios.post(`${process.env.NEXT_PUBLIC_ADMIN_URL}/Login`, {
+        Username: values.adminId,
+        Password: values.password,
+      });
+
+      // Adjust according to API response structure
+      const data = res.data;
+
+      if (
+        Array.isArray(data) &&
+        data.length > 0 &&
+        data[0].StatusCode === "1"
+      ) {
+        alert(data[0].msg);
+      } else {
+        alert(data[0].msg);
+      }
+      router.push("/admin/storeForm");
     } catch (error) {
+      console.error("Login error:", error);
       alert("Admin login failed!");
     }
   };
