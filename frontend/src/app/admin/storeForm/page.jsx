@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import axios from "axios";
+import { useRouter } from "next/navigation";
 import {
   FaStore,
   FaPhone,
@@ -13,16 +14,26 @@ import {
   FaFlag,
   FaInfoCircle,
   FaFileAlt,
+  FaUpload,
+  FaSpinner,
 } from "react-icons/fa";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import StoreInfoPopup from "@/components/StoreInfoPopup";
 
 const StoreForm = () => {
+  const router = useRouter();
   const [countries, setCountries] = useState([]);
   const [states, setStates] = useState([]);
   const [cities, setCities] = useState([]);
   const [aadharCard, setaadharCard] = useState("");
   const [panCard, setpanCard] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploadingPan, setUploadingPan] = useState(false);
+  const [uploadingAadhar, setUploadingAadhar] = useState(false);
+  const [popupData, setPopupData] = useState({ storeId: null, password: null });
+  const [showPopup, setShowPopup] = useState(false);
+
   const formik = useFormik({
     initialValues: {
       storeName: "",
@@ -57,27 +68,8 @@ const StoreForm = () => {
       ),
     }),
     onSubmit: async (values, { resetForm }) => {
+      setIsSubmitting(true);
       try {
-        // const formData = new FormData();
-
-        // // Append all values except files
-        // Object.keys(values).forEach((key) => {
-        //   if (
-        //     key !== "panNumberAttachment" &&
-        //     key !== "aadharNumberAttachment" &&
-        //     values[key] !== null
-        //   ) {
-        //     formData.append(key, values[key]);
-        //   }
-        // });
-
-        // // Append files separately
-        // if (values.panNumberAttachment) {
-        //   formData.append("panNumberAttachment", panCard);
-        // }
-        // if (values.aadharNumberAttachment) {
-        //   formData.append("aadharNumberAttachment", aadharCard);
-        // }
         var storeObject = {
           StoreName: values.storeName,
           Email: values.email,
@@ -94,12 +86,33 @@ const StoreForm = () => {
         const response = await axios.post(
           `${process.env.NEXT_PUBLIC_STORE_URL}/ManageStore`,
           storeObject
-          // Removed manual headers - let browser set multipart boundary
         );
+        
         if (response.data[0].status == "1") {
           toast.success(response.data[0].message);
+          
+          // Show store credentials if provided in response
+          if (response.data[0].NewStoreId && response.data[0].StorePassword) {
+            setPopupData({
+              storeId: response.data[0].NewStoreId,
+              password: response.data[0].StorePassword,
+            });
+            toast.info(
+              `Store ID: ${response.data[0].NewStoreId} | Password: ${response.data[0].StorePassword}`,
+              { autoClose: 8000 }
+            );
+            setShowPopup(true);
+          }
+          
           resetForm();
-        }else{
+          setaadharCard("");
+          setpanCard("");
+          
+          // Redirect to stores list after 2 seconds
+          setTimeout(() => {
+            router.push("/admin/allStores");
+          }, 2000);
+        } else {
           toast.error(response.data[0].message);
         }
       } catch (error) {
@@ -107,6 +120,8 @@ const StoreForm = () => {
         toast.error(
           `Submission failed: ${error.response?.data?.message || error.message}`
         );
+      } finally {
+        setIsSubmitting(false);
       }
     },
   });
@@ -169,15 +184,14 @@ const StoreForm = () => {
     }
   }, [formik.values.state]);
 
-  const handleFileChange = (e, fieldName) => {
-    formik.setFieldValue(fieldName, e.currentTarget.files[0]);
-  };
   const handleFileUploadChange = async (e, uploadtype) => {
     const file = e.target.files[0] || null;
     const field =
       uploadtype === "Pan" ? "panNumberAttachment" : "aadharNumberAttachment";
+    
     // Make Formik aware this field has been interacted with
     formik.setFieldTouched(field, true, false);
+    
     // No file selected
     if (!file) {
       formik.setFieldError(field, "Please select an image file.");
@@ -205,6 +219,13 @@ const StoreForm = () => {
     // Clear any previous error before uploading
     formik.setFieldError(field, undefined);
 
+    // Set uploading state
+    if (uploadtype === "Pan") {
+      setUploadingPan(true);
+    } else {
+      setUploadingAadhar(true);
+    }
+
     const formData = new FormData();
     formData.append("file", file);
     formData.append("uploadtype", uploadtype);
@@ -213,8 +234,6 @@ const StoreForm = () => {
       const res = await axios.post(
         `${process.env.NEXT_PUBLIC_STORE_URL}/PostUserImage`,
         formData
-        // ,
-        // { headers: { "Content-Type": "multipart/form-data" } }
       );
 
       if (res.data?.success && res.data?.fileName) {
@@ -226,7 +245,7 @@ const StoreForm = () => {
         }
         // Store the filename so Yup .required() passes and errors disappear
         formik.setFieldValue(field, res.data.fileName, true);
-        toast.success(`${uploadtype} image uploaded`);
+        toast.success(`${uploadtype} image uploaded successfully!`);
       } else {
         formik.setFieldError(field, res.data?.error || "Upload failed.");
       }
@@ -235,301 +254,465 @@ const StoreForm = () => {
         field,
         err?.response?.data?.error || err.message || "Upload failed."
       );
+    } finally {
+      if (uploadtype === "Pan") {
+        setUploadingPan(false);
+      } else {
+        setUploadingAadhar(false);
+      }
     }
   };
+
   return (
-    <div className="p-4 min-h-screen">
-      <h1 className="text-2xl sm:text-3xl font-extrabold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Add Store</h1>
-          <p className="text-gray-500 mt-1">Grow your business. Add a new store.</p>
-      <div className="bg-white p-4 md:p-6 rounded-xl shadow-lg">
-        <form onSubmit={formik.handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label
-                htmlFor="storeName"
-                className="text-sm font-medium text-gray-700 flex items-center"
-              >
-                <FaStore className="mr-2" /> Store Name
-              </label>
-              <input
-                type="text"
-                name="storeName"
-                id="storeName"
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                value={formik.values.storeName}
-                className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring focus:ring-blue-200 outline-none"
-              />
-              {formik.touched.storeName && formik.errors.storeName ? (
-                <div className="text-red-500 text-sm">
-                  {formik.errors.storeName}
-                </div>
-              ) : null}
-            </div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-6">
+      <div className="">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-2xl sm:text-3xl font-extrabold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+            Add New Store
+          </h1>
+          <p className="text-gray-500 mt-1">
+            Create a new store account with all required information
+          </p>
+        </div>
+
+        {/* Form Card */}
+        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden mx-auto">
+          <div className="bg-gradient-to-r from-indigo-500 to-purple-600 px-6 py-4">
+            <h2 className="text-xl font-semibold text-white flex items-center">
+              <FaStore className="mr-3" />
+              Store Information
+            </h2>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => handleFileUploadChange(e, "Aadhar")}
-            /> */}
-            {/* <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => handleFileUploadChange(e, "Pan")}
-            /> */}
-            <div>
-              <label
-                htmlFor="email"
-                className="text-sm font-medium text-gray-700 flex items-center"
-              >
-                <FaEnvelope className="mr-2" /> Email
-              </label>
-              <input
-                type="email"
-                name="email"
-                id="email"
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                value={formik.values.email}
-                className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring focus:ring-blue-200 outline-none"
-              />
-              {formik.touched.email && formik.errors.email ? (
-                <div className="text-red-500 text-sm">
-                  {formik.errors.email}
+          
+          <div className="p-6 md:p-8">
+            <form onSubmit={formik.handleSubmit} className="space-y-6">
+              {/* Store Name */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="lg:col-span-2">
+                  <label
+                    htmlFor="storeName"
+                    className="block text-sm font-semibold text-gray-700 mb-2 flex items-center"
+                  >
+                    <FaStore className="mr-2 text-indigo-500" />
+                    Store Name *
+                  </label>
+                  <input
+                    type="text"
+                    name="storeName"
+                    id="storeName"
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    value={formik.values.storeName}
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors ${
+                      formik.touched.storeName && formik.errors.storeName
+                        ? "border-red-300"
+                        : "border-gray-300"
+                    }`}
+                    placeholder="Enter store name"
+                  />
+                  {formik.touched.storeName && formik.errors.storeName && (
+                    <div className="text-red-500 text-sm mt-1 flex items-center">
+                      <FaInfoCircle className="mr-1" />
+                      {formik.errors.storeName}
+                    </div>
+                  )}
                 </div>
-              ) : null}
-            </div>
-            <div>
-              <label
-                htmlFor="phone"
-                className="text-sm font-medium text-gray-700 flex items-center"
-              >
-                <FaPhone className="mr-2" /> Phone
-              </label>
-              <input
-                type="tel"
-                name="phone"
-                id="phone"
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                value={formik.values.phone}
-                className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring focus:ring-blue-200 outline-none"
-              />
-              {formik.touched.phone && formik.errors.phone ? (
-                <div className="text-red-500 text-sm">
-                  {formik.errors.phone}
-                </div>
-              ) : null}
-            </div>
-          </div>
-          <div>
-            <label
-              htmlFor="address"
-              className="text-sm font-medium text-gray-700 flex items-center"
-            >
-              <FaMapMarkerAlt className="mr-2" /> Address
-            </label>
-            <input
-              type="text"
-              name="address"
-              id="address"
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-              value={formik.values.address}
-              className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring focus:ring-blue-200 outline-none"
-            />
-            {formik.touched.address && formik.errors.address ? (
-              <div className="text-red-500 text-sm">
-                {formik.errors.address}
               </div>
-            ) : null}
-          </div>
-          <div>
-            <label
-              htmlFor="country"
-              className="text-sm font-medium text-gray-700 flex items-center"
-            >
-              <FaFlag className="mr-2" /> Country
-            </label>
-            <select
-              name="country"
-              id="country"
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-              value={formik.values.country}
-              className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring focus:ring-blue-200 outline-none"
-            >
-              <option value="" label="Select a country" />
-              {countries.map((country) => (
-                <option
-                  key={country.CountryId}
-                  value={country.CountryId}
-                  label={country.CountryName}
-                />
-              ))}
-            </select>
-            {formik.touched.country && formik.errors.country ? (
-              <div className="text-red-500 text-sm">
-                {formik.errors.country}
+
+              {/* Contact Information */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label
+                    htmlFor="email"
+                    className="block text-sm font-semibold text-gray-700 mb-2 flex items-center"
+                  >
+                    <FaEnvelope className="mr-2 text-indigo-500" />
+                    Email Address *
+                  </label>
+                  <input
+                    type="email"
+                    name="email"
+                    id="email"
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    value={formik.values.email}
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors ${
+                      formik.touched.email && formik.errors.email
+                        ? "border-red-300"
+                        : "border-gray-300"
+                    }`}
+                    placeholder="store@example.com"
+                  />
+                  {formik.touched.email && formik.errors.email && (
+                    <div className="text-red-500 text-sm mt-1 flex items-center">
+                      <FaInfoCircle className="mr-1" />
+                      {formik.errors.email}
+                    </div>
+                  )}
+                </div>
+                
+                <div>
+                  <label
+                    htmlFor="phone"
+                    className="block text-sm font-semibold text-gray-700 mb-2 flex items-center"
+                  >
+                    <FaPhone className="mr-2 text-indigo-500" />
+                    Phone Number *
+                  </label>
+                  <input
+                    type="tel"
+                    name="phone"
+                    id="phone"
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    value={formik.values.phone}
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors ${
+                      formik.touched.phone && formik.errors.phone
+                        ? "border-red-300"
+                        : "border-gray-300"
+                    }`}
+                    placeholder="+91 98765 43210"
+                  />
+                  {formik.touched.phone && formik.errors.phone && (
+                    <div className="text-red-500 text-sm mt-1 flex items-center">
+                      <FaInfoCircle className="mr-1" />
+                      {formik.errors.phone}
+                    </div>
+                  )}
+                </div>
               </div>
-            ) : null}
-          </div>
-          <div>
-            <label
-              htmlFor="state"
-              className="text-sm font-medium text-gray-700 flex items-center"
-            >
-              <FaBuilding className="mr-2" /> State
-            </label>
-            <select
-              name="state"
-              id="state"
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-              value={formik.values.state}
-              className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring focus:ring-blue-200 outline-none"
-              disabled={!formik.values.country}
-            >
-              <option value="" label="Select a state" />
-              {states.map((state) => (
-                <option
-                  key={state.StateId}
-                  value={state.StateId}
-                  label={state.StateName}
+
+              {/* Address */}
+              <div>
+                <label
+                  htmlFor="address"
+                  className="block text-sm font-semibold text-gray-700 mb-2 flex items-center"
+                >
+                  <FaMapMarkerAlt className="mr-2 text-indigo-500" />
+                  Complete Address *
+                </label>
+                <input
+                  type="text"
+                  name="address"
+                  id="address"
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                  value={formik.values.address}
+                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors ${
+                    formik.touched.address && formik.errors.address
+                      ? "border-red-300"
+                      : "border-gray-300"
+                  }`}
+                  placeholder="Enter complete address"
                 />
-              ))}
-            </select>
-            {formik.touched.state && formik.errors.state ? (
-              <div className="text-red-500 text-sm">{formik.errors.state}</div>
-            ) : null}
-          </div>
-          <div>
-            <label
-              htmlFor="city"
-              className="text-sm font-medium text-gray-700 flex items-center"
-            >
-              <FaCity className="mr-2" /> City
-            </label>
-            <select
-              name="city"
-              id="city"
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-              value={formik.values.city}
-              className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring focus:ring-blue-200 outline-none"
-              disabled={!formik.values.state}
-            >
-              <option value="" label="Select a city" />
-              {cities.map((city) => (
-                <option
-                  key={city.CityId}
-                  value={city.CityId}
-                  label={city.CityName}
-                />
-              ))}
-            </select>
-            {formik.touched.city && formik.errors.city ? (
-              <div className="text-red-500 text-sm">{formik.errors.city}</div>
-            ) : null}
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label
-                htmlFor="panNumber"
-                className="text-sm font-medium text-gray-700 flex items-center"
-              >
-                <FaInfoCircle className="mr-2" /> PAN Number
-              </label>
-              <input
-                type="text"
-                name="panNumber"
-                id="panNumber"
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                value={formik.values.panNumber}
-                className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring focus:ring-blue-200 outline-none"
-              />
-              {formik.touched.panNumber && formik.errors.panNumber ? (
-                <div className="text-red-500 text-sm">
-                  {formik.errors.panNumber}
+                {formik.touched.address && formik.errors.address && (
+                  <div className="text-red-500 text-sm mt-1 flex items-center">
+                    <FaInfoCircle className="mr-1" />
+                    {formik.errors.address}
+                  </div>
+                )}
+              </div>
+
+              {/* Location Dropdowns */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                  <label
+                    htmlFor="country"
+                    className="block text-sm font-semibold text-gray-700 mb-2 flex items-center"
+                  >
+                    <FaFlag className="mr-2 text-indigo-500" />
+                    Country *
+                  </label>
+                  <select
+                    name="country"
+                    id="country"
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    value={formik.values.country}
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors ${
+                      formik.touched.country && formik.errors.country
+                        ? "border-red-300"
+                        : "border-gray-300"
+                    }`}
+                  >
+                    <option value="">Select Country</option>
+                    {countries.map((country) => (
+                      <option
+                        key={country.CountryId}
+                        value={country.CountryId}
+                      >
+                        {country.CountryName}
+                      </option>
+                    ))}
+                  </select>
+                  {formik.touched.country && formik.errors.country && (
+                    <div className="text-red-500 text-sm mt-1 flex items-center">
+                      <FaInfoCircle className="mr-1" />
+                      {formik.errors.country}
+                    </div>
+                  )}
                 </div>
-              ) : null}
-            </div>
-            <div>
-              <label
-                htmlFor="panNumberAttachment"
-                className="text-sm font-medium text-gray-700 flex items-center"
-              >
-                <FaFileAlt className="mr-2" /> PAN Number Attachment
-              </label>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => handleFileUploadChange(e, "Pan")}
-                className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring focus:ring-blue-200 outline-none"
-              />
-              {formik.touched.panNumberAttachment &&
-              formik.errors.panNumberAttachment ? (
-                <div className="text-red-500 text-sm">
-                  {formik.errors.panNumberAttachment}
+
+                <div>
+                  <label
+                    htmlFor="state"
+                    className="block text-sm font-semibold text-gray-700 mb-2 flex items-center"
+                  >
+                    <FaBuilding className="mr-2 text-indigo-500" />
+                    State *
+                  </label>
+                  <select
+                    name="state"
+                    id="state"
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    value={formik.values.state}
+                    disabled={!formik.values.country}
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors ${
+                      formik.touched.state && formik.errors.state
+                        ? "border-red-300"
+                        : "border-gray-300"
+                    } ${!formik.values.country ? "bg-gray-100 cursor-not-allowed" : ""}`}
+                  >
+                    <option value="">Select State</option>
+                    {states.map((state) => (
+                      <option
+                        key={state.StateId}
+                        value={state.StateId}
+                      >
+                        {state.StateName}
+                      </option>
+                    ))}
+                  </select>
+                  {formik.touched.state && formik.errors.state && (
+                    <div className="text-red-500 text-sm mt-1 flex items-center">
+                      <FaInfoCircle className="mr-1" />
+                      {formik.errors.state}
+                    </div>
+                  )}
                 </div>
-              ) : null}
-            </div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label
-                htmlFor="aadharNumber"
-                className="text-sm font-medium text-gray-700 flex items-center"
-              >
-                <FaInfoCircle className="mr-2" /> Aadhar Number
-              </label>
-              <input
-                type="text"
-                name="aadharNumber"
-                id="aadharNumber"
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                value={formik.values.aadharNumber}
-                className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring focus:ring-blue-200 outline-none"
-              />
-              {formik.touched.aadharNumber && formik.errors.aadharNumber ? (
-                <div className="text-red-500 text-sm">
-                  {formik.errors.aadharNumber}
+
+                <div>
+                  <label
+                    htmlFor="city"
+                    className="block text-sm font-semibold text-gray-700 mb-2 flex items-center"
+                  >
+                    <FaCity className="mr-2 text-indigo-500" />
+                    City *
+                  </label>
+                  <select
+                    name="city"
+                    id="city"
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    value={formik.values.city}
+                    disabled={!formik.values.state}
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors ${
+                      formik.touched.city && formik.errors.city
+                        ? "border-red-300"
+                        : "border-gray-300"
+                    } ${!formik.values.state ? "bg-gray-100 cursor-not-allowed" : ""}`}
+                  >
+                    <option value="">Select City</option>
+                    {cities.map((city) => (
+                      <option
+                        key={city.CityId}
+                        value={city.CityId}
+                      >
+                        {city.CityName}
+                      </option>
+                    ))}
+                  </select>
+                  {formik.touched.city && formik.errors.city && (
+                    <div className="text-red-500 text-sm mt-1 flex items-center">
+                      <FaInfoCircle className="mr-1" />
+                      {formik.errors.city}
+                    </div>
+                  )}
                 </div>
-              ) : null}
-            </div>
-            <div>
-              <label
-                htmlFor="aadharNumberAttachment"
-                className="text-sm font-medium text-gray-700 flex items-center"
-              >
-                <FaFileAlt className="mr-2" /> Aadhar Number Attachment
-              </label>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => handleFileUploadChange(e, "Aadhar")}
-                className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring focus:ring-blue-200 outline-none"
-              />
-              {formik.touched.aadharNumberAttachment &&
-              formik.errors.aadharNumberAttachment ? (
-                <div className="text-red-500 text-sm">
-                  {formik.errors.aadharNumberAttachment}
+              </div>
+
+              {/* PAN Information */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label
+                    htmlFor="panNumber"
+                    className="block text-sm font-semibold text-gray-700 mb-2 flex items-center"
+                  >
+                    <FaInfoCircle className="mr-2 text-indigo-500" />
+                    PAN Number *
+                  </label>
+                  <input
+                    type="text"
+                    name="panNumber"
+                    id="panNumber"
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    value={formik.values.panNumber}
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors font-mono ${
+                      formik.touched.panNumber && formik.errors.panNumber
+                        ? "border-red-300"
+                        : "border-gray-300"
+                    }`}
+                    placeholder="ABCDE1234F"
+                  />
+                  {formik.touched.panNumber && formik.errors.panNumber && (
+                    <div className="text-red-500 text-sm mt-1 flex items-center">
+                      <FaInfoCircle className="mr-1" />
+                      {formik.errors.panNumber}
+                    </div>
+                  )}
                 </div>
-              ) : null}
-            </div>
+                
+                <div>
+                  <label
+                    htmlFor="panNumberAttachment"
+                    className="block text-sm font-semibold text-gray-700 mb-2 flex items-center"
+                  >
+                    <FaFileAlt className="mr-2 text-indigo-500" />
+                    PAN Card Image *
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleFileUploadChange(e, "Pan")}
+                      className="hidden"
+                      id="panNumberAttachment"
+                    />
+                    <label
+                      htmlFor="panNumberAttachment"
+                      className={`w-full px-4 py-3 border rounded-lg cursor-pointer transition-colors flex items-center justify-center ${
+                        formik.touched.panNumberAttachment && formik.errors.panNumberAttachment
+                          ? "border-red-300 bg-red-50"
+                          : "border-gray-300 hover:border-indigo-500 hover:bg-indigo-50"
+                      }`}
+                    >
+                      {uploadingPan ? (
+                        <FaSpinner className="animate-spin mr-2 text-indigo-500" />
+                      ) : (
+                        <FaUpload className="mr-2 text-indigo-500" />
+                      )}
+                      {panCard ? "PAN Card Uploaded ✓" : "Upload PAN Card"}
+                    </label>
+                  </div>
+                  {formik.touched.panNumberAttachment && formik.errors.panNumberAttachment && (
+                    <div className="text-red-500 text-sm mt-1 flex items-center">
+                      <FaInfoCircle className="mr-1" />
+                      {formik.errors.panNumberAttachment}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Aadhar Information */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label
+                    htmlFor="aadharNumber"
+                    className="block text-sm font-semibold text-gray-700 mb-2 flex items-center"
+                  >
+                    <FaInfoCircle className="mr-2 text-indigo-500" />
+                    Aadhar Number *
+                  </label>
+                  <input
+                    type="text"
+                    name="aadharNumber"
+                    id="aadharNumber"
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    value={formik.values.aadharNumber}
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors font-mono ${
+                      formik.touched.aadharNumber && formik.errors.aadharNumber
+                        ? "border-red-300"
+                        : "border-gray-300"
+                    }`}
+                    placeholder="1234 5678 9012"
+                  />
+                  {formik.touched.aadharNumber && formik.errors.aadharNumber && (
+                    <div className="text-red-500 text-sm mt-1 flex items-center">
+                      <FaInfoCircle className="mr-1" />
+                      {formik.errors.aadharNumber}
+                    </div>
+                  )}
+                </div>
+                
+                <div>
+                  <label
+                    htmlFor="aadharNumberAttachment"
+                    className="block text-sm font-semibold text-gray-700 mb-2 flex items-center"
+                  >
+                    <FaFileAlt className="mr-2 text-indigo-500" />
+                    Aadhar Card Image *
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleFileUploadChange(e, "Aadhar")}
+                      className="hidden"
+                      id="aadharNumberAttachment"
+                    />
+                    <label
+                      htmlFor="aadharNumberAttachment"
+                      className={`w-full px-4 py-3 border rounded-lg cursor-pointer transition-colors flex items-center justify-center ${
+                        formik.touched.aadharNumberAttachment && formik.errors.aadharNumberAttachment
+                          ? "border-red-300 bg-red-50"
+                          : "border-gray-300 hover:border-indigo-500 hover:bg-indigo-50"
+                      }`}
+                    >
+                      {uploadingAadhar ? (
+                        <FaSpinner className="animate-spin mr-2 text-indigo-500" />
+                      ) : (
+                        <FaUpload className="mr-2 text-indigo-500" />
+                      )}
+                      {aadharCard ? "Aadhar Card Uploaded ✓" : "Upload Aadhar Card"}
+                    </label>
+                  </div>
+                  {formik.touched.aadharNumberAttachment && formik.errors.aadharNumberAttachment && (
+                    <div className="text-red-500 text-sm mt-1 flex items-center">
+                      <FaInfoCircle className="mr-1" />
+                      {formik.errors.aadharNumberAttachment}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Submit Button */}
+              <div className="pt-6">
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className={`w-full flex justify-center items-center py-4 px-6 border border-transparent rounded-xl shadow-lg text-lg font-semibold text-white transition-all duration-200 ${
+                    isSubmitting
+                      ? "bg-gray-400 cursor-not-allowed"
+                      : "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 transform hover:scale-[1.02] active:scale-[0.98]"
+                  }`}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <FaSpinner className="animate-spin mr-3" />
+                      Creating Store...
+                    </>
+                  ) : (
+                    <>
+                      <FaStore className="mr-3" />
+                      Create Store
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
-          <div>
-            <button
-              type="submit"
-              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              Submit
-            </button>
-          </div>
-        </form>
+        </div>
+        {showPopup && (
+        <StoreInfoPopup
+          storeId={popupData.storeId}
+          password={popupData.password}
+          onClose={handleClosePopup}
+        />
+      )}
       </div>
       <ToastContainer />
     </div>

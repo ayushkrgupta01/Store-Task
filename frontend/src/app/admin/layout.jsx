@@ -4,9 +4,28 @@ import Sidebar from "./Sidebar";
 import ProtectedAdminRoute from "../../components/ProtectedAdminRoute";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { useAdminAuth } from "../../contexts/AdminAuthContext";
+import { useRouter } from "next/navigation";
+import { FaSignOutAlt } from "react-icons/fa";
+import { toast } from "react-toastify";
 
 export default function Layout({ children }) {
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
+  const { logout } = useAdminAuth();
+  const router = useRouter();
+
+  const handleLogout = () => {
+    logout();
+    toast.success("Logged out successfully!", {
+      position: "top-right",
+      autoClose: 2000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+    });
+    router.push('/');
+  };
 
   return (
     <ProtectedAdminRoute>
@@ -24,15 +43,15 @@ export default function Layout({ children }) {
           </aside>
         </div>
 
-        {/* Desktop Sidebar */}
-        <aside className="hidden md:block w-64 bg-white border-r border-gray-200">
+        {/* Desktop Sidebar - Fixed Position */}
+        <aside className="hidden md:block fixed left-0 top-0 h-full w-64 bg-white border-r border-gray-200 z-30">
           <Sidebar />
         </aside>
 
         {/* Content Area */}
-        <div className="flex-1 flex flex-col min-w-0">
+        <div className="flex-1 flex flex-col min-w-0 md:ml-64">
           {/* Top Bar */}
-          <header className="sticky top-0 z-30 bg-white border-b border-gray-200 px-4 md:px-6 h-14 flex items-center justify-between">
+          <header className="sticky top-0 z-20 bg-white border-b border-gray-200 px-4 md:px-6 h-14 flex items-center justify-between shadow-sm">
             <button
               className="md:hidden inline-flex items-center justify-center p-2 rounded-md text-gray-600 hover:bg-gray-100"
               onClick={() => setIsSidebarOpen(true)}
@@ -46,10 +65,18 @@ export default function Layout({ children }) {
               <img src="/LogoLight.jpeg" alt="Logo" className="h-8 w-8 rounded-full" />
               <span className="font-semibold text-gray-800 hidden sm:inline">Admin Dashboard</span>
             </div>
-            <div className="text-sm text-gray-500">v1.0</div>
+            <div className="flex items-center gap-4">
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+              >
+                <FaSignOutAlt className="w-4 h-4" />
+                <span className="hidden sm:inline">Logout</span>
+              </button>
+            </div>
           </header>
 
-          <main className="flex-1 p-4 md:p-6">
+          <main className="flex-1 p-4 md:p-6 overflow-auto">
             {children}
           </main>
         </div>
