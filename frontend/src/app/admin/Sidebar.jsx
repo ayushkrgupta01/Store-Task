@@ -3,10 +3,15 @@ import Link from "next/link";
 import React, { useState } from "react";
 import { FaTachometerAlt, FaStore, FaUsers, FaBox, FaSignInAlt, FaUserPlus, FaBars, FaShoppingCart, FaCog, FaUserCircle, FaSignOutAlt } from 'react-icons/fa';
 import { IoIosArrowDown, IoMdAddCircle, IoMdPeople, IoMdCart } from 'react-icons/io';
+import { useAdminAuth } from "../../contexts/AdminAuthContext";
+import { useRouter } from "next/navigation";
+import { toast } from "react-toastify";
 
-const Sidebar = () => {
+const Sidebar = ({ onNavigate = () => {} }) => {
   const [openStores, setOpenStores] = useState(false);
   const [openCustomers, setOpenCustomers] = useState(false);
+  const { logout, adminData } = useAdminAuth();
+  const router = useRouter();
 
   const toggleStores = () => {
     setOpenStores(!openStores);
@@ -16,34 +21,38 @@ const Sidebar = () => {
     setOpenCustomers(!openCustomers);
   };
 
-  return (
-    <div>
-      <button
-        data-drawer-target="sidebar-multi-level-sidebar"
-        data-drawer-toggle="sidebar-multi-level-sidebar"
-        aria-controls="sidebar-multi-level-sidebar"
-        type="button"
-        className="inline-flex items-center p-2 mt-2 ms-3 text-sm text-gray-500 rounded-lg sm:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600"
-      >
-        <span className="sr-only">Open sidebar</span>
-        <FaBars className="w-6 h-6" />
-      </button>
+  const handleLogout = () => {
+    logout();
+    toast.success("Logged out successfully!", {
+      position: "top-right",
+      autoClose: 2000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+    });
+    router.push('/');
+  };
 
-      <aside
-        id="sidebar-multi-level-sidebar"
-        className="fixed top-0 left-0 z-40 w-64 h-screen transition-transform -translate-x-full sm:translate-x-0"
-        aria-label="Sidebar"
-      >
-        <div className="h-full px-3 py-4 overflow-y-auto bg-gray-50 dark:bg-gray-800">
+  return (
+    <div className="h-full w-64 bg-gray-50 dark:bg-gray-800">
+      <div className="h-full px-3 py-4 overflow-y-auto">
           {/* Title at the top of the sidebar */}
           <div className="text-center py-4">
-            <h2 className="text-xl font-semibold text-gray-800 dark:text-white">Title</h2>
+            <img src="/LogoLight.jpeg" alt="Logo" className="h-10 w-10 rounded-full mx-auto mb-2" />
+            <h2 className="text-xl font-semibold text-gray-800 dark:text-white">Admin Panel</h2>
+            {adminData && (
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                Welcome, {adminData.username}
+              </p>
+            )}
           </div>
 
           <ul className="space-y-2 font-medium">
             <li>
               <Link
                 href="/admin"
+                onClick={onNavigate}
                 className="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
               >
                 <FaTachometerAlt className="w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white" />
@@ -52,11 +61,32 @@ const Sidebar = () => {
             </li>
             <li>
               <Link
-                href="/admin/storeForm"
+                href="/admin/allStores"
+                onClick={onNavigate}
                 className="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
               >
-                <IoMdAddCircle className="w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white" />
-                <span className="flex-1 ms-3 whitespace-nowrap">Add Store</span>
+                <FaShoppingCart className="w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white" />
+                <span className="flex-1 ms-3 whitespace-nowrap">Stores</span>
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/admin/allCustomers"
+                onClick={onNavigate}
+                className="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
+              >
+                <FaUserCircle className="w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white" />
+                <span className="flex-1 ms-3 whitespace-nowrap">Customers</span>
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/admin/allServices"
+                onClick={onNavigate}
+                className="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
+              >
+                <FaCog className="w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white" />
+                <span className="flex-1 ms-3 whitespace-nowrap">Services</span>
               </Link>
             </li>
             <li>
@@ -73,26 +103,29 @@ const Sidebar = () => {
                 <ul className="py-2 space-y-2">
                   <li>
                     <Link
-                      href="/admin/stores/option1"
+                      href="/admin/storeForm"
+                      onClick={onNavigate}
                       className="flex items-center p-2 pl-11 w-full text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
                     >
-                      Option 1
+                      Add Store
                     </Link>
                   </li>
                   <li>
                     <Link
-                      href="/admin/stores/option2"
+                      href="/admin/manageStore"
+                      onClick={onNavigate}
                       className="flex items-center p-2 pl-11 w-full text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
                     >
-                      Option 2
+                      Manage Store
                     </Link>
                   </li>
                   <li>
                     <Link
-                      href="/admin/stores/option3"
+                      href="/admin/storeDetails"
+                      onClick={onNavigate}
                       className="flex items-center p-2 pl-11 w-full text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
                     >
-                      Option 3
+                      Store Details
                     </Link>
                   </li>
                 </ul>
@@ -137,45 +170,18 @@ const Sidebar = () => {
                 </ul>
               )}
             </li>
+
             <li>
-              <Link
-                href="/admin/stores"
-                className="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
-              >
-                <FaShoppingCart className="w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white" />
-                <span className="flex-1 ms-3 whitespace-nowrap">Stores</span>
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="/admin/customers"
-                className="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
-              >
-                <FaUserCircle className="w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white" />
-                <span className="flex-1 ms-3 whitespace-nowrap">Customers</span>
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="/admin/services"
-                className="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
-              >
-                <FaCog className="w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white" />
-                <span className="flex-1 ms-3 whitespace-nowrap">Services</span>
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="#"
-                className="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
+              <button
+                onClick={handleLogout}
+                className="flex items-center p-2 w-full text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
               >
                 <FaSignOutAlt className="w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white" />
-                <span className="flex-1 ms-3 whitespace-nowrap">Logout</span>
-              </Link>
+                <span className="flex-1 ms-3 text-left whitespace-nowrap">Logout</span>
+              </button>
             </li>
           </ul>
-        </div>
-      </aside>
+      </div>
     </div>
   );
 };

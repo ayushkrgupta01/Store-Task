@@ -239,7 +239,8 @@ const StoreForm = () => {
   };
   return (
     <div className="p-4 min-h-screen">
-      <h1 className="text-2xl md:text-3xl font-bold mb-6">Open a New Store</h1>
+      <h1 className="text-2xl sm:text-3xl font-extrabold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Add Store</h1>
+          <p className="text-gray-500 mt-1">Grow your business. Add a new store.</p>
       <div className="bg-white p-4 md:p-6 rounded-xl shadow-lg">
         <form onSubmit={formik.handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

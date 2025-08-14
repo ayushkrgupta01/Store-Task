@@ -1,8 +1,8 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
-  LineChart,
-  Line,
+  BarChart,
+  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -10,132 +10,147 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
-import { FaUsers, FaDollarSign, FaShoppingCart } from "react-icons/fa";
+import { FaStore, FaEnvelope, FaPhone } from "react-icons/fa";
+import axios from "axios";
+import { toast } from "react-toastify";
+import LoadingSpinner from "../../components/LoadingSpinner";
 
 const AdminHome = () => {
-  const [salesData] = useState([
-    { month: "Jan", sales: 4000, revenue: 2400 },
-    { month: "Feb", sales: 3000, revenue: 1398 },
-    { month: "Mar", sales: 2000, revenue: 9800 },
-    { month: "Apr", sales: 2780, revenue: 3908 },
-    { month: "May", sales: 1890, revenue: 4800 },
-    { month: "Jun", sales: 2390, revenue: 3800 },
-    { month: "Jul", sales: 3490, revenue: 4300 },
-  ]);
+  const [stores, setStores] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const fetchStores = async () => {
+    setLoading(true);
+    try {
+      const res = await axios.get(
+        `${process.env.NEXT_PUBLIC_STORE_URL}/GetStores`
+      );
+      setStores(res.data || []);
+    } catch (err) {
+      toast.error("Failed to load stores");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchStores();
+  }, []);
+
+  const metrics = useMemo(() => {
+    const totalStores = stores.length;
+    const storesWithEmail = stores.filter(s => s.Email && String(s.Email).trim() !== "").length;
+    const storesWithPhone = stores.filter(s => s.Phone && String(s.Phone).trim() !== "").length;
+    return { totalStores, storesWithEmail, storesWithPhone };
+  }, [stores]);
+
+  const domainChartData = useMemo(() => {
+    const domainCountMap = new Map();
+    for (const s of stores) {
+      const email = s.Email || "";
+      const parts = String(email).split("@");
+      if (parts.length === 2) {
+        const domain = parts[1].toLowerCase();
+        domainCountMap.set(domain, (domainCountMap.get(domain) || 0) + 1);
+      }
+    }
+    const arr = Array.from(domainCountMap.entries()).map(([domain, count]) => ({ domain, count }));
+    arr.sort((a, b) => b.count - a.count);
+    return arr.slice(0, 7);
+  }, [stores]);
+
+  if (loading) {
+    return <LoadingSpinner fullScreen={true} size="xl" text="Loading dashboard..." />;
+  }
 
   return (
-    <div className="space-y-8">
-      {/* Title */}
-      <h1 className="text-3xl font-bold text-gray-800">📊 Dashboard Overview</h1>
+    <div className="p-4 min-h-screen bg-gray-50">
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mb-6">
+      <div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Dashboard</h1>
+          <p className="text-gray-500 mt-1">All your tasks, in one view.</p>
+        </div>
+        <button
+          onClick={fetchStores}
+          className="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition"
+        >
+          Refresh
+        </button>
+      </div>
 
-      {/* Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div className="p-6 rounded-xl shadow-lg bg-gradient-to-r from-indigo-500 to-indigo-600 text-white hover:scale-105 transform transition">
+        <div className="p-6 rounded-xl shadow-lg bg-gradient-to-r from-indigo-500 to-indigo-600 text-white">
           <div className="flex items-center space-x-4">
-            <FaUsers className="text-4xl" />
+            <FaStore className="text-4xl" />
             <div>
-              <h2 className="text-sm font-medium opacity-80">Total Users</h2>
-              <p className="text-2xl font-bold">1,245</p>
+              <h2 className="text-sm font-medium opacity-80">Total Stores</h2>
+              <p className="text-3xl font-bold">{metrics.totalStores}</p>
             </div>
           </div>
         </div>
-        <div className="p-6 rounded-xl shadow-lg bg-gradient-to-r from-green-500 to-green-600 text-white hover:scale-105 transform transition">
+        <div className="p-6 rounded-xl shadow-lg bg-gradient-to-r from-green-500 to-green-600 text-white">
           <div className="flex items-center space-x-4">
-            <FaDollarSign className="text-4xl" />
+            <FaEnvelope className="text-4xl" />
             <div>
-              <h2 className="text-sm font-medium opacity-80">Monthly Sales</h2>
-              <p className="text-2xl font-bold">$12,450</p>
+              <h2 className="text-sm font-medium opacity-80">Stores With Email</h2>
+              <p className="text-3xl font-bold">{metrics.storesWithEmail}</p>
             </div>
           </div>
         </div>
-        <div className="p-6 rounded-xl shadow-lg bg-gradient-to-r from-yellow-500 to-yellow-600 text-white hover:scale-105 transform transition">
+        <div className="p-6 rounded-xl shadow-lg bg-gradient-to-r from-yellow-500 to-yellow-600 text-white">
           <div className="flex items-center space-x-4">
-            <FaShoppingCart className="text-4xl" />
+            <FaPhone className="text-4xl" />
             <div>
-              <h2 className="text-sm font-medium opacity-80">Pending Orders</h2>
-              <p className="text-2xl font-bold">32</p>
+              <h2 className="text-sm font-medium opacity-80">Stores With Phone</h2>
+              <p className="text-3xl font-bold">{metrics.storesWithPhone}</p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Chart */}
       <div className="bg-white p-6 rounded-xl shadow-lg">
-        <h2 className="text-xl font-semibold mb-4 text-gray-800">
-          Sales Overview
-        </h2>
-        <div className="w-full h-72">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={salesData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-              <XAxis dataKey="month" stroke="#6b7280" />
-              <YAxis stroke="#6b7280" />
-              <Tooltip contentStyle={{ borderRadius: "8px" }} />
-              <Legend />
-              <Line
-                type="monotone"
-                dataKey="sales"
-                stroke="#6366f1"
-                strokeWidth={3}
-                dot={{ r: 4 }}
-              />
-              <Line
-                type="monotone"
-                dataKey="revenue"
-                stroke="#10b981"
-                strokeWidth={3}
-                dot={{ r: 4 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
+        <h2 className="text-xl font-semibold mb-4 text-gray-800">Top Email Domains</h2>
+        {domainChartData.length === 0 ? (
+          <p className="text-gray-500">No email data available.</p>
+        ) : (
+          <div className="w-full h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={domainChartData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                <XAxis dataKey="domain" stroke="#6b7280" />
+                <YAxis allowDecimals={false} stroke="#6b7280" />
+                <Tooltip contentStyle={{ borderRadius: "8px" }} />
+                <Legend />
+                <Bar dataKey="count" fill="#6366f1" name="Stores" radius={[6, 6, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        )}
       </div>
 
-      {/* Table */}
       <div className="bg-white p-6 rounded-xl shadow-lg overflow-x-auto">
-        <h2 className="text-xl font-semibold mb-4 text-gray-800">
-          Recent Orders
-        </h2>
+        <h2 className="text-xl font-semibold mb-4 text-gray-800">Recent Stores</h2>
         <table className="min-w-full table-auto border-collapse">
           <thead>
             <tr className="bg-gray-100 text-gray-700 text-left">
-              <th className="p-3 border-b">Order ID</th>
-              <th className="p-3 border-b">Customer</th>
-              <th className="p-3 border-b">Amount</th>
-              <th className="p-3 border-b">Status</th>
+              <th className="p-3 border-b">Store Name</th>
+              <th className="p-3 border-b">Email</th>
+              <th className="p-3 border-b">Phone</th>
             </tr>
           </thead>
           <tbody>
-            <tr className="hover:bg-gray-50 transition">
-              <td className="p-3 border-b">#1001</td>
-              <td className="p-3 border-b">John Doe</td>
-              <td className="p-3 border-b">$120.00</td>
-              <td className="p-3 border-b">
-                <span className="px-3 py-1 rounded-full bg-green-100 text-green-700 text-sm">
-                  Completed
-                </span>
-              </td>
-            </tr>
-            <tr className="hover:bg-gray-50 transition">
-              <td className="p-3 border-b">#1002</td>
-              <td className="p-3 border-b">Jane Smith</td>
-              <td className="p-3 border-b">$85.00</td>
-              <td className="p-3 border-b">
-                <span className="px-3 py-1 rounded-full bg-yellow-100 text-yellow-700 text-sm">
-                  Pending
-                </span>
-              </td>
-            </tr>
-            <tr className="hover:bg-gray-50 transition">
-              <td className="p-3 border-b">#1003</td>
-              <td className="p-3 border-b">Mike Johnson</td>
-              <td className="p-3 border-b">$45.00</td>
-              <td className="p-3 border-b">
-                <span className="px-3 py-1 rounded-full bg-red-100 text-red-700 text-sm">
-                  Cancelled
-                </span>
-              </td>
-            </tr>
+            {(stores || []).slice(0, 8).map((s, idx) => (
+              <tr key={s.StoreId || idx} className="hover:bg-gray-50 transition">
+                <td className="p-3 border-b">{s.StoreName || "-"}</td>
+                <td className="p-3 border-b">{s.Email || "-"}</td>
+                <td className="p-3 border-b">{s.Phone || "-"}</td>
+              </tr>
+            ))}
+            {stores.length === 0 && (
+              <tr>
+                <td colSpan={3} className="p-4 text-center text-gray-500 border">No stores found</td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
