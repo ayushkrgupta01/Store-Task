@@ -115,9 +115,9 @@ const StoreForm = () => {
           setpanCard("");
           
           // Redirect to stores list after 2 seconds
-          {showPopup === false && setTimeout(() => {
-            router.push("/admin/allStores");
-          }, 2000);}
+          // {showPopup === false && setTimeout(() => {
+          //   router.push("/admin/allStores");
+          // }, 2000);}
         } else {
           toast.error(response.data[0].message);
         }

@@ -36,20 +36,19 @@ const StoreDetailsPage = () => {
   if (!storeData) return <p className="p-4 text-red-500">Store not found</p>;
 
   return (
-    <div className="min-h-screen bg-gray-100 p-8">
-      <header className="mb-8 text-center">
-        <h1 className="text-4xl font-extrabold text-gray-900">Store Profile</h1>
-        <p className="mt-2 text-xl text-gray-600">
-          Detailed information about the selected store.
-        </p>
-      </header>
-
-      {/* ✅ Pass the fetched data into your StoreInfo component */}
-      <StoreInfo storeId={id} readOnly={true} />
-
-      {/* <footer className="mt-12 text-center text-gray-500">
-        <p>&copy; 2025 Your App. All rights reserved.</p>
-      </footer> */}
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-6">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+            Store Profile
+          </h1>
+          <p className="text-gray-600 mt-2 text-lg">
+            Detailed information about the selected store.
+          </p>
+        </div>
+        <StoreInfo storeId={id} readOnly={true} />
+      </div>
     </div>
   );
 };

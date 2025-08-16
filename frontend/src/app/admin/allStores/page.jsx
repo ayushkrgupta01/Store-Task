@@ -1,6 +1,14 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { FaStore, FaSearch, FaSyncAlt, FaSpinner, FaEye, FaEdit, FaTrash } from "react-icons/fa";
+import {
+  FaStore,
+  FaSearch,
+  FaSyncAlt,
+  FaSpinner,
+  FaEye,
+  FaEdit,
+  FaTrash,
+} from "react-icons/fa";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import axios from "axios";
@@ -15,7 +23,9 @@ const AllStores = () => {
   const fetchStores = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_STORE_URL}/GetStores`);
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_STORE_URL}/GetStores`
+      );
       setStores(response.data);
     } catch (error) {
       console.error("Failed to load stores:", error);
@@ -33,20 +43,38 @@ const AllStores = () => {
     const q = query.trim().toLowerCase();
     if (!q) return true;
     return (
-      String(store.StoreName || "").toLowerCase().includes(q) ||
-      String(store.Email || "").toLowerCase().includes(q) ||
-      String(store.Phone || "").toLowerCase().includes(q) ||
-      String(store.StateName || store.State || "").toLowerCase().includes(q) ||
-      String(store.CityName || store.City || "").toLowerCase().includes(q) ||
-      String(store.PAN || store.PanNumber || store.PanNo || "").toLowerCase().includes(q) ||
-      String(store.Aadhar || store.AadharNumber || store.AadharNo || "").toLowerCase().includes(q)
+      String(store.StoreName || "")
+        .toLowerCase()
+        .includes(q) ||
+      String(store.Email || "")
+        .toLowerCase()
+        .includes(q) ||
+      String(store.Phone || "")
+        .toLowerCase()
+        .includes(q) ||
+      String(store.StateName || store.State || "")
+        .toLowerCase()
+        .includes(q) ||
+      String(store.CityName || store.City || "")
+        .toLowerCase()
+        .includes(q) ||
+      String(store.PAN || store.PanNumber || store.PanNo || "")
+        .toLowerCase()
+        .includes(q) ||
+      String(store.Aadhar || store.AadharNumber || store.AadharNo || "")
+        .toLowerCase()
+        .includes(q)
     );
   });
 
   const getValue = (obj, keys) => {
     for (const key of keys) {
       const value = obj && obj[key];
-      if (value !== undefined && value !== null && String(value).trim() !== "") {
+      if (
+        value !== undefined &&
+        value !== null &&
+        String(value).trim() !== ""
+      ) {
         return value;
       }
     }
@@ -83,7 +111,7 @@ const AllStores = () => {
                 onClick={fetchStores}
                 className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
               >
-                <FaSpinner className={`${loading ? 'animate-spin' : ''}`} />
+                <FaSpinner className={`${loading ? "animate-spin" : ""}`} />
                 Refresh
               </button>
               <button
@@ -105,7 +133,7 @@ const AllStores = () => {
               Store List
             </h2>
           </div>
-          
+
           <div className="p-6">
             {loading ? (
               <div className="flex items-center justify-center py-12">
@@ -116,37 +144,82 @@ const AllStores = () => {
                 <table className="w-full border-collapse min-w-[800px]">
                   <thead>
                     <tr className="text-left text-xs uppercase tracking-wide text-gray-600">
-                      <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">Store Name</th>
-                      <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">Email</th>
-                      <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">Phone</th>
-                      <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">State</th>
-                      <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">City</th>
-                      <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">PAN</th>
-                      <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">Aadhar</th>
-                      <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">Actions</th>
+                      <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
+                        Store Name
+                      </th>
+                      <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
+                        Email
+                      </th>
+                      <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
+                        Phone
+                      </th>
+                      <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
+                        State
+                      </th>
+                      <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
+                        City
+                      </th>
+                      <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
+                        PAN
+                      </th>
+                      <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
+                        Aadhar
+                      </th>
+                      <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
+                        Actions
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
                     {filtered.length > 0 ? (
                       filtered.map((store, index) => (
-                        <tr key={store.StoreId || index} className="hover:bg-gray-50 text-sm sm:text-[15px]">
-                          <td className="p-3 text-sm border-t truncate">{getValue(store, ["StoreName"])}</td>
-                          <td className="p-3 text-sm border-t truncate">{getValue(store, ["Email"])}</td>
-                          <td className="p-3 text-sm border-t truncate">{getValue(store, ["Phone"])}</td>
-                          <td className="p-3 text-sm border-t truncate">{getValue(store, ["StateName", "State", "state"])}</td>
-                          <td className="p-3 text-sm border-t truncate">{getValue(store, ["CityName", "City", "city"])}</td>
-                          <td className="p-3 text-sm border-t font-mono truncate">{getValue(store, ["PAN", "PANNumber", "PanNo"])}</td>
-                          <td className="p-3 text-sm border-t font-mono truncate">{getValue(store, ["Aadhar", "AadharNumber", "AadharNo"])}</td>
+                        <tr
+                          key={store.StoreId || index}
+                          className="hover:bg-gray-50 text-sm sm:text-[15px]"
+                        >
+                          <td className="p-3 text-sm border-t truncate">
+                            {getValue(store, ["StoreName"])}
+                          </td>
+                          <td className="p-3 text-sm border-t truncate">
+                            {getValue(store, ["Email"])}
+                          </td>
+                          <td className="p-3 text-sm border-t truncate">
+                            {getValue(store, ["Phone"])}
+                          </td>
+                          <td className="p-3 text-sm border-t truncate">
+                            {getValue(store, ["StateName", "State", "state"])}
+                          </td>
+                          <td className="p-3 text-sm border-t truncate">
+                            {getValue(store, ["CityName", "City", "city"])}
+                          </td>
+                          <td className="p-3 text-sm border-t font-mono truncate">
+                            {getValue(store, ["PAN", "PANNumber", "PanNo"])}
+                          </td>
+                          <td className="p-3 text-sm border-t font-mono truncate">
+                            {getValue(store, [
+                              "Aadhar",
+                              "AadharNumber",
+                              "AadharNo",
+                            ])}
+                          </td>
                           <td className="p-3 border-t">
                             <div className="flex flex-wrap gap-2">
                               <button
-                                onClick={() => router.push(`/admin/singleStoreDetails/${store.StoreId}`)}
+                                onClick={() =>
+                                  router.push(
+                                    `/admin/singleStoreDetails/${store.StoreID}`
+                                  )
+                                }
                                 className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded flex items-center gap-1 text-sm transition-colors"
                               >
                                 <FaEye /> View
                               </button>
                               <button
-                                onClick={() => router.push(`/admin/editStore/${store.StoreId}`)}
+                                onClick={() =>
+                                  router.push(
+                                    `/admin/editStore/${store.StoreId}`
+                                  )
+                                }
                                 className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded flex items-center gap-1 text-sm transition-colors"
                               >
                                 <FaEdit /> Edit
@@ -157,7 +230,10 @@ const AllStores = () => {
                       ))
                     ) : (
                       <tr>
-                        <td colSpan={8} className="p-8 text-center text-gray-500 border-t">
+                        <td
+                          colSpan={8}
+                          className="p-8 text-center text-gray-500 border-t"
+                        >
                           <div className="flex flex-col items-center gap-2">
                             <FaStore className="text-4xl text-gray-300" />
                             <p>No stores found</p>
@@ -172,7 +248,7 @@ const AllStores = () => {
           </div>
         </div>
       </div>
-      <ToastContainer 
+      <ToastContainer
         position="top-right"
         autoClose={5000}
         hideProgressBar={false}

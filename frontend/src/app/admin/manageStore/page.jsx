@@ -5,12 +5,15 @@ import { useRouter } from "next/navigation";
 import { FaEdit, FaTrash, FaInfoCircle, FaStore } from "react-icons/fa";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import DeleteStorePopup from "@/components/DeleteStorePopup";
 
 const ManageStores = () => {
   const router = useRouter();
   const [stores, setStores] = useState([]);
   const [loading, setLoading] = useState(false);
   const [query, setQuery] = useState("");
+  const [showDeletePopup, setShowDeletePopup] = useState(false);
+  const [selectedStore, setSelectedStore] = useState(null);
 
   const fetchStores = async () => {
     setLoading(true);
@@ -26,15 +29,18 @@ const ManageStores = () => {
     }
   };
 
-  const handleDelete = async (StoreID) => {
-    if (!confirm("Are you sure you want to delete this store?")) return;
+  const confirmDelete = (store) => {
+    setSelectedStore(store);
+    setShowDeletePopup(true);
+  };
 
+  const handleDelete = async (storeId) => {
     try {
       const res = await axios.delete(
         `${process.env.NEXT_PUBLIC_STORE_URL}/DeleteStore`,
         {
-          data: { StoreID: StoreID, ActionMode: "DELETE" }, // 👈 wrap inside "data"
-          headers: { "Content-Type": "application/json" }, // 👈 add content-type
+          data: { StoreID: storeId, ActionMode: "DELETE" },
+          headers: { "Content-Type": "application/json" },
         }
       );
 
@@ -44,10 +50,14 @@ const ManageStores = () => {
       } else {
         toast.error(res.data[0].message);
       }
-    } catch {
+    } catch (err) {
       toast.error("Delete failed");
+    } finally {
+      setShowDeletePopup(false);
+      setSelectedStore(null);
     }
   };
+
   useEffect(() => {
     fetchStores();
   }, []);
@@ -146,113 +156,138 @@ const ManageStores = () => {
           <div className="bg-gradient-to-r from-indigo-500 to-purple-600 px-6 py-4">
             <h2 className="text-xl font-semibold text-white flex items-center">
               <FaStore className="mr-3" />
-              Store Details         </h2>
+              Store Details{" "}
+            </h2>
           </div>
           <div className="p-6">
-          <table className="w-full border-collapse min-w-[1024px]">
-            <thead>
-              <tr className="text-left text-xs uppercase tracking-wide text-gray-600">
-                <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
-                  Store Name
-                </th>
-                <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
-                  Email
-                </th>
-                <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
-                  Phone
-                </th>
-                <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
-                  State
-                </th>
-                <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
-                  City
-                </th>
-                <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
-                  PAN
-                </th>
-                <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
-                  Aadhar
-                </th>
-                <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.length > 0 ? (
-                filtered.map((store, index) => (
-                  <tr
-                    key={store.StoreID || index}
-                    className="hover:bg-gray-50 text-sm sm:text-[15px]"
-                  >
-                    <td className="p-3 border-t">
-                      {getValue(store, ["StoreName"])}
-                    </td>
-                    <td className="p-3 border-t">
-                      {getValue(store, ["Email"])}
-                    </td>
-                    <td className="p-3 border-t">
-                      {getValue(store, ["Phone"])}
-                    </td>
-                    <td className="p-3 border-t">
-                      {getValue(store, ["StateName", "State", "state"])}
-                    </td>
-                    <td className="p-3 border-t">
-                      {getValue(store, ["CityName", "City", "city"])}
-                    </td>
-                    <td className="p-3 border-t font-mono">
-                      {getValue(store, ["PAN", "PANNumber", "PanNo"])}
-                    </td>
-                    <td className="p-3 border-t font-mono">
-                      {getValue(store, ["Aadhar", "AadharNumber", "AadharNo"])}
-                    </td>
-                    <td className="p-3 border-t">
-                      <div className="flex flex-wrap gap-2">
-                        <button
-                          onClick={() =>
-                            router.push(`/admin/editStore/${store.StoreId}`)
-                          }
-                          className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded flex items-center gap-1 text-sm"
-                        >
-                          <FaEdit /> Edit
-                        </button>
-                        <button
-                          onClick={() => handleDelete(store.StoreID)}
-                          className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded flex items-center gap-1 text-sm"
-                        >
-                          <FaTrash /> Delete
-                        </button>
-                        <button
-                          onClick={() =>
-                            router.push(
-                              `/admin/singleStoreDetails/${store.StoreID}`
-                            )
-                          }
-                          className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded flex items-center gap-1 text-sm"
-                        >
-                          <FaInfoCircle /> Details
-                        </button>
-                      </div>
+            <table className="w-full border-collapse min-w-[1024px]">
+              <thead>
+                <tr className="text-left text-xs uppercase tracking-wide text-gray-600">
+                  <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
+                    Store Name
+                  </th>
+                  <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
+                    Email
+                  </th>
+                  <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
+                    Phone
+                  </th>
+                  <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
+                    State
+                  </th>
+                  <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
+                    City
+                  </th>
+                  <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
+                    PAN
+                  </th>
+                  <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
+                    Aadhar
+                  </th>
+                  <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.length > 0 ? (
+                  filtered.map((store, index) => (
+                    <tr
+                      key={store.StoreID || index}
+                      className="hover:bg-gray-50 text-sm sm:text-[15px]"
+                    >
+                      <td className="p-3 border-t">
+                        {getValue(store, ["StoreName"])}
+                      </td>
+                      <td className="p-3 border-t">
+                        {getValue(store, ["Email"])}
+                      </td>
+                      <td className="p-3 border-t">
+                        {getValue(store, ["Phone"])}
+                      </td>
+                      <td className="p-3 border-t">
+                        {getValue(store, ["StateName", "State", "state"])}
+                      </td>
+                      <td className="p-3 border-t">
+                        {getValue(store, ["CityName", "City", "city"])}
+                      </td>
+                      <td className="p-3 border-t font-mono">
+                        {getValue(store, ["PAN", "PANNumber", "PanNo"])}
+                      </td>
+                      <td className="p-3 border-t font-mono">
+                        {getValue(store, [
+                          "Aadhar",
+                          "AadharNumber",
+                          "AadharNo",
+                        ])}
+                      </td>
+                      <td className="p-3 border-t">
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            onClick={() =>
+                              router.push(`/admin/editStore/${store.StoreId}`)
+                            }
+                            className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded flex items-center gap-1 text-sm"
+                          >
+                            <FaEdit /> Edit
+                          </button>
+                          <button
+                            onClick={() => confirmDelete(store)}
+                            className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded flex items-center gap-1 text-sm"
+                          >
+                            <FaTrash /> Delete
+                          </button>
+                          <button
+                            onClick={() =>
+                              router.push(
+                                `/admin/singleStoreDetails/${store.StoreID}`
+                              )
+                            }
+                            className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded flex items-center gap-1 text-sm"
+                          >
+                            <FaInfoCircle /> Details
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td
+                      colSpan={8}
+                      className="p-4 text-center text-gray-500 border"
+                    >
+                      No stores found
                     </td>
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td
-                    colSpan={8}
-                    className="p-4 text-center text-gray-500 border"
-                  >
-                    No stores found
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
       )}
 
-      <ToastContainer />
+      {showDeletePopup && selectedStore && (
+        <DeleteStorePopup
+          storeId={selectedStore.StoreID}
+          storeName={selectedStore.StoreName}
+          onConfirm={handleDelete}
+          onClose={() => setShowDeletePopup(false)}
+        />
+      )}
+
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
     </div>
   );
 };

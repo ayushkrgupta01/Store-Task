@@ -1,11 +1,20 @@
 "use client";
 import React from "react";
-import { FaStore, FaCheckCircle, FaCopy, FaTimes, FaEye, FaEyeSlash } from "react-icons/fa";
+import {
+  FaStore,
+  FaCheckCircle,
+  FaCopy,
+  FaTimes,
+  FaEye,
+  FaEyeSlash,
+} from "react-icons/fa";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 const StoreInfoPopup = ({ storeId, password, onClose }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [copiedField, setCopiedField] = useState(null);
+  const router = useRouter();
 
   const copyToClipboard = async (text, field) => {
     try {
@@ -13,8 +22,12 @@ const StoreInfoPopup = ({ storeId, password, onClose }) => {
       setCopiedField(field);
       setTimeout(() => setCopiedField(null), 2000);
     } catch (err) {
-      console.error('Failed to copy: ', err);
+      console.error("Failed to copy: ", err);
     }
+  };
+
+  const handleClose = () => {
+    router.push("/admin/allStores"); // ✅ redirect on close
   };
 
   return (
@@ -28,8 +41,12 @@ const StoreInfoPopup = ({ storeId, password, onClose }) => {
                 <FaCheckCircle className="text-white text-xl" />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-white">Store Created Successfully!</h2>
-                <p className="text-green-100 text-sm">Your store has been registered</p>
+                <h2 className="text-xl font-bold text-white">
+                  Store Created Successfully!
+                </h2>
+                <p className="text-green-100 text-sm">
+                  Your store has been registered
+                </p>
               </div>
             </div>
             <button
@@ -51,7 +68,8 @@ const StoreInfoPopup = ({ storeId, password, onClose }) => {
               Store Credentials
             </h3>
             <p className="text-gray-600 text-sm">
-              Please save these credentials securely. You'll need them to access your store.
+              Please save these credentials securely. You'll need them to access
+              your store.
             </p>
           </div>
 
@@ -68,14 +86,20 @@ const StoreInfoPopup = ({ storeId, password, onClose }) => {
                 className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg font-mono text-sm focus:outline-none"
               />
               <button
-                onClick={() => copyToClipboard(storeId, 'storeId')}
+                onClick={() => copyToClipboard(storeId, "storeId")}
                 className="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 text-gray-500 hover:text-gray-700 transition-colors"
               >
-                <FaCopy className={`text-sm ${copiedField === 'storeId' ? 'text-green-500' : ''}`} />
+                <FaCopy
+                  className={`text-sm ${
+                    copiedField === "storeId" ? "text-green-500" : ""
+                  }`}
+                />
               </button>
             </div>
-            {copiedField === 'storeId' && (
-              <p className="text-green-600 text-xs mt-1">Copied to clipboard!</p>
+            {copiedField === "storeId" && (
+              <p className="text-green-600 text-xs mt-1">
+                Copied to clipboard!
+              </p>
             )}
           </div>
 
@@ -96,18 +120,28 @@ const StoreInfoPopup = ({ storeId, password, onClose }) => {
                   onClick={() => setShowPassword(!showPassword)}
                   className="p-2 text-gray-500 hover:text-gray-700 transition-colors"
                 >
-                  {showPassword ? <FaEyeSlash className="text-sm" /> : <FaEye className="text-sm" />}
+                  {showPassword ? (
+                    <FaEyeSlash className="text-sm" />
+                  ) : (
+                    <FaEye className="text-sm" />
+                  )}
                 </button>
                 <button
-                  onClick={() => copyToClipboard(password, 'password')}
+                  onClick={() => copyToClipboard(password, "password")}
                   className="p-2 text-gray-500 hover:text-gray-700 transition-colors"
                 >
-                  <FaCopy className={`text-sm ${copiedField === 'password' ? 'text-green-500' : ''}`} />
+                  <FaCopy
+                    className={`text-sm ${
+                      copiedField === "password" ? "text-green-500" : ""
+                    }`}
+                  />
                 </button>
               </div>
             </div>
-            {copiedField === 'password' && (
-              <p className="text-green-600 text-xs mt-1">Copied to clipboard!</p>
+            {copiedField === "password" && (
+              <p className="text-green-600 text-xs mt-1">
+                Copied to clipboard!
+              </p>
             )}
           </div>
 
@@ -115,8 +149,16 @@ const StoreInfoPopup = ({ storeId, password, onClose }) => {
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
             <div className="flex">
               <div className="flex-shrink-0">
-                <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                <svg
+                  className="h-5 w-5 text-yellow-400"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                    clipRule="evenodd"
+                  />
                 </svg>
               </div>
               <div className="ml-3">
@@ -125,7 +167,8 @@ const StoreInfoPopup = ({ storeId, password, onClose }) => {
                 </h3>
                 <div className="mt-2 text-sm text-yellow-700">
                   <p>
-                    Please save these credentials in a secure location. You won't be able to see the password again.
+                    Please save these credentials in a secure location. You
+                    won't be able to see the password again.
                   </p>
                 </div>
               </div>
@@ -135,14 +178,17 @@ const StoreInfoPopup = ({ storeId, password, onClose }) => {
           {/* Actions */}
           <div className="flex space-x-3">
             <button
-              onClick={onClose}
+              onClick={handleClose}
               className="flex-1 bg-gray-500 hover:bg-gray-600 text-white py-3 px-4 rounded-lg font-medium transition-colors"
             >
               Close
             </button>
             <button
               onClick={() => {
-                copyToClipboard(`Store ID: ${storeId}\nPassword: ${password}`, 'both');
+                copyToClipboard(
+                  `Store ID: ${storeId}\nPassword: ${password}`,
+                  "both"
+                );
               }}
               className="flex-1 bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-lg font-medium transition-colors"
             >
