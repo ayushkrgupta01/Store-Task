@@ -27,7 +27,7 @@ const StoreInfoPopup = ({ storeId, password, onClose }) => {
   };
 
   const handleClose = () => {
-    router.push("/admin/allStores"); // ✅ redirect on close
+    router.push("/admin/manageStore"); // ✅ redirect on close
   };
 
   return (
