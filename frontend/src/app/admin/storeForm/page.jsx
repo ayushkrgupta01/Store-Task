@@ -16,6 +16,7 @@ import {
   FaFileAlt,
   FaUpload,
   FaSpinner,
+  FaArrowLeft,
 } from "react-icons/fa";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -69,13 +70,21 @@ const StoreForm = () => {
       state: Yup.string().required("Please select a state"),
       city: Yup.string().required("Please select a city"),
       panNumber: Yup.string()
-        .matches(/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/, "Please enter a valid PAN number (e.g., ABCDE1234F)")
+        .matches(
+          /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/,
+          "Please enter a valid PAN number (e.g., ABCDE1234F)"
+        )
         .required("PAN number is required"),
       panNumberAttachment: Yup.mixed().required("PAN card image is required"),
       aadharNumber: Yup.string()
-        .matches(/^[0-9]{4}\s[0-9]{4}\s[0-9]{4}$/, "Please enter a valid Aadhar number (e.g., 1234 5678 9012)")
+        .matches(
+          /^[0-9]{4}\s[0-9]{4}\s[0-9]{4}$/,
+          "Please enter a valid Aadhar number (e.g., 1234 5678 9012)"
+        )
         .required("Aadhar number is required"),
-      aadharNumberAttachment: Yup.mixed().required("Aadhar card image is required"),
+      aadharNumberAttachment: Yup.mixed().required(
+        "Aadhar card image is required"
+      ),
     }),
     onSubmit: async (values, { resetForm }) => {
       setIsSubmitting(true);
@@ -97,10 +106,10 @@ const StoreForm = () => {
           `${process.env.NEXT_PUBLIC_STORE_URL}/ManageStore`,
           storeObject
         );
-        
+
         if (response.data[0].status == "1") {
           toast.success(response.data[0].message);
-          
+
           // Show store credentials if provided in response
           if (response.data[0].NewStoreId && response.data[0].StorePassword) {
             setPopupData({
@@ -109,11 +118,11 @@ const StoreForm = () => {
             });
             setShowPopup(true);
           }
-          
+
           resetForm();
           setaadharCard("");
           setpanCard("");
-          
+
           // Redirect to stores list after 2 seconds
           // {showPopup === false && setTimeout(() => {
           //   router.push("/admin/allStores");
@@ -199,10 +208,10 @@ const StoreForm = () => {
     const file = e.target.files[0] || null;
     const field =
       uploadtype === "Pan" ? "panNumberAttachment" : "aadharNumberAttachment";
-    
+
     // Make Formik aware this field has been interacted with
     formik.setFieldTouched(field, true, false);
-    
+
     // No file selected
     if (!file) {
       formik.setFieldError(field, "Please select an image file.");
@@ -276,6 +285,13 @@ const StoreForm = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-6">
+      <button
+        onClick={() => router.back()}
+        className="flex items-center gap-2 text-indigo-600 hover:text-indigo-700 transition-colors"
+      >
+        <FaArrowLeft />
+        Back
+      </button>
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-8">
@@ -295,7 +311,7 @@ const StoreForm = () => {
               Store Information
             </h2>
           </div>
-          
+
           <div className="p-6 md:p-8">
             <form onSubmit={formik.handleSubmit} className="space-y-6">
               {/* Store Name */}
@@ -362,7 +378,7 @@ const StoreForm = () => {
                     </div>
                   )}
                 </div>
-                
+
                 <div>
                   <label
                     htmlFor="phone"
@@ -449,10 +465,7 @@ const StoreForm = () => {
                   >
                     <option value="">Select Country</option>
                     {countries.map((country) => (
-                      <option
-                        key={country.CountryId}
-                        value={country.CountryId}
-                      >
+                      <option key={country.CountryId} value={country.CountryId}>
                         {country.CountryName}
                       </option>
                     ))}
@@ -484,14 +497,15 @@ const StoreForm = () => {
                       formik.touched.state && formik.errors.state
                         ? "border-red-300"
                         : "border-gray-300"
-                    } ${!formik.values.country ? "bg-gray-100 cursor-not-allowed" : ""}`}
+                    } ${
+                      !formik.values.country
+                        ? "bg-gray-100 cursor-not-allowed"
+                        : ""
+                    }`}
                   >
                     <option value="">Select State</option>
                     {states.map((state) => (
-                      <option
-                        key={state.StateId}
-                        value={state.StateId}
-                      >
+                      <option key={state.StateId} value={state.StateId}>
                         {state.StateName}
                       </option>
                     ))}
@@ -523,14 +537,15 @@ const StoreForm = () => {
                       formik.touched.city && formik.errors.city
                         ? "border-red-300"
                         : "border-gray-300"
-                    } ${!formik.values.state ? "bg-gray-100 cursor-not-allowed" : ""}`}
+                    } ${
+                      !formik.values.state
+                        ? "bg-gray-100 cursor-not-allowed"
+                        : ""
+                    }`}
                   >
                     <option value="">Select City</option>
                     {cities.map((city) => (
-                      <option
-                        key={city.CityId}
-                        value={city.CityId}
-                      >
+                      <option key={city.CityId} value={city.CityId}>
                         {city.CityName}
                       </option>
                     ))}
@@ -575,7 +590,7 @@ const StoreForm = () => {
                     </div>
                   )}
                 </div>
-                
+
                 <div>
                   <label
                     htmlFor="panNumberAttachment"
@@ -595,7 +610,8 @@ const StoreForm = () => {
                     <label
                       htmlFor="panNumberAttachment"
                       className={`w-full px-4 py-3 border rounded-lg cursor-pointer transition-colors flex items-center justify-center ${
-                        formik.touched.panNumberAttachment && formik.errors.panNumberAttachment
+                        formik.touched.panNumberAttachment &&
+                        formik.errors.panNumberAttachment
                           ? "border-red-300 bg-red-50"
                           : "border-gray-300 hover:border-indigo-500 hover:bg-indigo-50"
                       }`}
@@ -608,12 +624,13 @@ const StoreForm = () => {
                       {panCard ? "PAN Card Uploaded ✓" : "Upload PAN Card"}
                     </label>
                   </div>
-                  {formik.touched.panNumberAttachment && formik.errors.panNumberAttachment && (
-                    <div className="text-red-500 text-sm mt-1 flex items-center">
-                      <FaInfoCircle className="mr-1" />
-                      {formik.errors.panNumberAttachment}
-                    </div>
-                  )}
+                  {formik.touched.panNumberAttachment &&
+                    formik.errors.panNumberAttachment && (
+                      <div className="text-red-500 text-sm mt-1 flex items-center">
+                        <FaInfoCircle className="mr-1" />
+                        {formik.errors.panNumberAttachment}
+                      </div>
+                    )}
                 </div>
               </div>
 
@@ -641,14 +658,15 @@ const StoreForm = () => {
                     }`}
                     placeholder="1234 5678 9012"
                   />
-                  {formik.touched.aadharNumber && formik.errors.aadharNumber && (
-                    <div className="text-red-500 text-sm mt-1 flex items-center">
-                      <FaInfoCircle className="mr-1" />
-                      {formik.errors.aadharNumber}
-                    </div>
-                  )}
+                  {formik.touched.aadharNumber &&
+                    formik.errors.aadharNumber && (
+                      <div className="text-red-500 text-sm mt-1 flex items-center">
+                        <FaInfoCircle className="mr-1" />
+                        {formik.errors.aadharNumber}
+                      </div>
+                    )}
                 </div>
-                
+
                 <div>
                   <label
                     htmlFor="aadharNumberAttachment"
@@ -668,7 +686,8 @@ const StoreForm = () => {
                     <label
                       htmlFor="aadharNumberAttachment"
                       className={`w-full px-4 py-3 border rounded-lg cursor-pointer transition-colors flex items-center justify-center ${
-                        formik.touched.aadharNumberAttachment && formik.errors.aadharNumberAttachment
+                        formik.touched.aadharNumberAttachment &&
+                        formik.errors.aadharNumberAttachment
                           ? "border-red-300 bg-red-50"
                           : "border-gray-300 hover:border-indigo-500 hover:bg-indigo-50"
                       }`}
@@ -678,15 +697,18 @@ const StoreForm = () => {
                       ) : (
                         <FaUpload className="mr-2 text-indigo-500" />
                       )}
-                      {aadharCard ? "Aadhar Card Uploaded ✓" : "Upload Aadhar Card"}
+                      {aadharCard
+                        ? "Aadhar Card Uploaded ✓"
+                        : "Upload Aadhar Card"}
                     </label>
                   </div>
-                  {formik.touched.aadharNumberAttachment && formik.errors.aadharNumberAttachment && (
-                    <div className="text-red-500 text-sm mt-1 flex items-center">
-                      <FaInfoCircle className="mr-1" />
-                      {formik.errors.aadharNumberAttachment}
-                    </div>
-                  )}
+                  {formik.touched.aadharNumberAttachment &&
+                    formik.errors.aadharNumberAttachment && (
+                      <div className="text-red-500 text-sm mt-1 flex items-center">
+                        <FaInfoCircle className="mr-1" />
+                        {formik.errors.aadharNumberAttachment}
+                      </div>
+                    )}
                 </div>
               </div>
 
@@ -725,7 +747,7 @@ const StoreForm = () => {
           />
         )}
       </div>
-      <ToastContainer 
+      <ToastContainer
         position="top-right"
         autoClose={5000}
         hideProgressBar={false}

@@ -2,12 +2,15 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import StoreInfo from "@/components/StoreInfo";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
+import { FaArrowLeft } from "react-icons/fa";
+
 
 const StoreDetailsPage = () => {
   const { id } = useParams(); // dynamic id from URL
   const [storeData, setStoreData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   // ✅ Fetch store details by ID
   const fetchStoreDetails = async (StoreID) => {
@@ -37,6 +40,13 @@ const StoreDetailsPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-6">
+      <button
+        onClick={() => router.back()}
+        className="flex items-center gap-2 text-indigo-600 hover:text-indigo-700 transition-colors"
+      >
+        <FaArrowLeft />
+        Back
+      </button>
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">

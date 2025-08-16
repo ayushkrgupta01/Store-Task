@@ -28,65 +28,76 @@ const EditStore = () => {
   const [countries, setCountries] = useState([]);
   const [states, setStates] = useState([]);
   const [cities, setCities] = useState([]);
-  const [aadharCard, setaadharCard] = useState("");
-  const [panCard, setpanCard] = useState("");
+  const [aadharCard, setAadharCard] = useState("");
+  const [panCard, setPanCard] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadingPan, setUploadingPan] = useState(false);
   const [uploadingAadhar, setUploadingAadhar] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [storeData, setStoreData] = useState(null);
 
-  const fetchStoreDetails = async (StoreID) => {
-    try {
-      const res = await axios.get(
-        `${process.env.NEXT_PUBLIC_STORE_URL}/GetStoreById`,
-        {
-          params: { id: StoreID }, // ✅ pass as query param
-        }
-      );
-      setStoreData(res.data);
-    } catch (err) {
-      console.error("Error fetching store details", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // ✅ Fetch store details
   useEffect(() => {
     if (id) {
-      fetchStoreDetails(id);
+      axios
+        .get(`${process.env.NEXT_PUBLIC_STORE_URL}/GetStoreById`, {
+          params: { id: id }, // ✅ pass as query param
+        })
+        .then((res) => {
+          if (res.data && res.data.length > 0) {
+            const s = res.data[0];
+            formik.setValues({
+              storeName: s.StoreName || "",
+              email: s.Email || "",
+              phone: s.Phone || "",
+              address: s.Address || "",
+              country: s.CountryId || "",
+              state: s.StateId || "",
+              city: s.CityId || "",
+              panNumber: s.PANNumber || "",
+              panNumberAttachment: s.PANNumberAttachment || "",
+              aadharNumber: s.AadharNumber || "",
+              aadharNumberAttachment: s.AadharNumberAttachment || "",
+            });
+            setPanCard(s.PANNumberAttachment || "");
+            setAadharCard(s.AadharNumberAttachment || "");
+          }
+          setLoading(false);
+        })
+        .catch((err) => {
+          console.error(err);
+          toast.error("Failed to load store data.");
+          setLoading(false);
+        });
     }
   }, [id]);
 
-  if (loading) return <p className="p-4">Loading store details...</p>;
-  if (!storeData) return <p className="p-4 text-red-500">Store not found</p>;
-
-const formik = useFormik({
-  enableReinitialize: true, // <-- important
-  initialValues: {
-    storeName: storeData?.StoreName || "",
-    email: storeData?.Email || "",
-    phone: storeData?.Phone || "",
-    address: storeData?.Address || "",
-    country: storeData?.CountryId || "",
-    state: storeData?.StateId || "",
-    city: storeData?.CityId || "",
-    panNumber: storeData?.PANNumber || "",
-    panNumberAttachment: storeData?.PANNumberAttachment || null,
-    aadharNumber: storeData?.AadharNumber || "",
-    aadharNumberAttachment: storeData?.AadharNumberAttachment || null,
-  },
-  validationSchema: Yup.object({
-    storeName: Yup.string().required("Store name is required"),
-    email: Yup.string().email("Invalid email").required("Email is required"),
-    phone: Yup.string().required("Phone is required"),
-    address: Yup.string().required("Address is required"),
-    country: Yup.string().required("Country is required"),
-    state: Yup.string().required("State is required"),
-    city: Yup.string().required("City is required"),
-    panNumber: Yup.string().required("PAN number is required"),
-    aadharNumber: Yup.string().required("Aadhar number is required"),
-  }),
+  // ✅ Formik
+  const formik = useFormik({
+    enableReinitialize: true,
+    initialValues: {
+      storeName: "",
+      email: "",
+      phone: "",
+      address: "",
+      country: "",
+      state: "",
+      city: "",
+      panNumber: "",
+      panNumberAttachment: "",
+      aadharNumber: "",
+      aadharNumberAttachment: "",
+    },
+    validationSchema: Yup.object({
+      storeName: Yup.string().required("Store name is required"),
+      email: Yup.string().email("Invalid email").required("Email is required"),
+      phone: Yup.string().required("Phone is required"),
+      address: Yup.string().required("Address is required"),
+      country: Yup.string().required("Country is required"),
+      state: Yup.string().required("State is required"),
+      city: Yup.string().required("City is required"),
+      panNumber: Yup.string().required("PAN number is required"),
+      aadharNumber: Yup.string().required("Aadhar number is required"),
+    }),
     onSubmit: async (values) => {
       setIsSubmitting(true);
       try {
@@ -100,14 +111,13 @@ const formik = useFormik({
           StateId: values.state,
           CityId: values.city,
           PanNumber: values.panNumber,
-          PanNumberAttachment: panCard,
+          PANNumberAttachment: panCard,
           AadharNumber: values.aadharNumber,
           AadharNumberAttachment: aadharCard,
-          ActionMode: "Update",
+          ActionMode: "UPDATE",
         };
-
-        const response = await axios.post(
-          `${process.env.NEXT_PUBLIC_STORE_URL}/ManageStore`,
+        const response = await axios.put(
+          `${process.env.NEXT_PUBLIC_STORE_URL}/EditStore`,
           storeObject
         );
 
@@ -125,7 +135,7 @@ const formik = useFormik({
     },
   });
 
-  // Load countries
+  // ✅ Load countries
   useEffect(() => {
     axios
       .get(process.env.NEXT_PUBLIC_COUNTRIES_URL)
@@ -133,7 +143,7 @@ const formik = useFormik({
       .catch(() => toast.error("Failed to load countries."));
   }, []);
 
-  // Load states when country changes
+  // ✅ Load states when country changes
   useEffect(() => {
     if (formik.values.country) {
       axios
@@ -145,7 +155,7 @@ const formik = useFormik({
     }
   }, [formik.values.country]);
 
-  // Load cities when state changes
+  // ✅ Load cities when state changes
   useEffect(() => {
     if (formik.values.state) {
       axios
@@ -157,39 +167,7 @@ const formik = useFormik({
     }
   }, [formik.values.state]);
 
-  // Load existing store data
-  useEffect(() => {
-    if (id) {
-      axios
-        .get(`${process.env.NEXT_PUBLIC_STORE_URL}/GetStoreById?StoreId=${id}`)
-        .then((res) => {
-          if (res.data && res.data.length > 0) {
-            const s = res.data[0];
-            formik.setValues({
-              storeName: s.StoreName || "",
-              email: s.Email || "",
-              phone: s.Phone || "",
-              address: s.Address || "",
-              country: s.CountryId || "",
-              state: s.StateId || "",
-              city: s.CityId || "",
-              panNumber: s.PanNumber || "",
-              panNumberAttachment: s.PanNumberAttachment || "",
-              aadharNumber: s.AadharNumber || "",
-              aadharNumberAttachment: s.AadharNumberAttachment || "",
-            });
-            setpanCard(s.PanNumberAttachment || "");
-            setaadharCard(s.AadharNumberAttachment || "");
-          }
-          setLoading(false);
-        })
-        .catch(() => {
-          toast.error("Failed to load store data.");
-          setLoading(false);
-        });
-    }
-  }, [id]);
-
+  // ✅ File upload
   const handleFileUploadChange = async (e, uploadtype) => {
     const file = e.target.files[0] || null;
     const field =
@@ -207,7 +185,6 @@ const formik = useFormik({
       return;
     }
 
-    // Set uploading state
     if (uploadtype === "Pan") {
       setUploadingPan(true);
     } else {
@@ -225,9 +202,9 @@ const formik = useFormik({
       );
       if (res.data?.success && res.data?.fileName) {
         if (uploadtype === "Pan") {
-          setpanCard(res.data.fileName);
+          setPanCard(res.data.fileName);
         } else {
-          setaadharCard(res.data.fileName);
+          setAadharCard(res.data.fileName);
         }
         formik.setFieldValue(field, res.data.fileName);
         toast.success(`${uploadtype} image uploaded successfully!`);
@@ -258,18 +235,17 @@ const formik = useFormik({
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-6">
+      <button
+        onClick={() => router.back()}
+        className="flex items-center gap-2 text-indigo-600 hover:text-indigo-700 transition-colors"
+      >
+        <FaArrowLeft />
+        Back
+      </button>
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center gap-4 mb-4">
-            <button
-              onClick={() => router.back()}
-              className="flex items-center gap-2 text-indigo-600 hover:text-indigo-700 transition-colors"
-            >
-              <FaArrowLeft />
-              Back
-            </button>
-          </div>
+          <div className="flex items-center gap-4 mb-4"></div>
           <h1 className="text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
             Edit Store
           </h1>
@@ -302,7 +278,6 @@ const formik = useFormik({
                   <input
                     type="text"
                     name="storeName"
-                    id="storeName"
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
                     value={formik.values.storeName}
@@ -335,7 +310,6 @@ const formik = useFormik({
                   <input
                     type="email"
                     name="email"
-                    id="email"
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
                     value={formik.values.email}
@@ -363,9 +337,8 @@ const formik = useFormik({
                     Phone Number *
                   </label>
                   <input
-                    type="tel"
+                    type="text"
                     name="phone"
-                    id="phone"
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
                     value={formik.values.phone}
@@ -397,7 +370,6 @@ const formik = useFormik({
                 <input
                   type="text"
                   name="address"
-                  id="address"
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
                   value={formik.values.address}
@@ -428,7 +400,6 @@ const formik = useFormik({
                   </label>
                   <select
                     name="country"
-                    id="country"
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
                     value={formik.values.country}
@@ -439,9 +410,9 @@ const formik = useFormik({
                     }`}
                   >
                     <option value="">Select Country</option>
-                    {countries.map((country) => (
-                      <option key={country.CountryId} value={country.CountryId}>
-                        {country.CountryName}
+                    {countries.map((c) => (
+                      <option key={c.CountryId} value={c.CountryId}>
+                        {c.CountryName}
                       </option>
                     ))}
                   </select>
@@ -463,7 +434,6 @@ const formik = useFormik({
                   </label>
                   <select
                     name="state"
-                    id="state"
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
                     value={formik.values.state}
@@ -478,10 +448,10 @@ const formik = useFormik({
                         : ""
                     }`}
                   >
-                    <option value="">Select State</option>
-                    {states.map((state) => (
-                      <option key={state.StateId} value={state.StateId}>
-                        {state.StateName}
+                    <option value="">Select</option>
+                    {states.map((s) => (
+                      <option key={s.StateId} value={s.StateId}>
+                        {s.StateName}
                       </option>
                     ))}
                   </select>
@@ -503,7 +473,6 @@ const formik = useFormik({
                   </label>
                   <select
                     name="city"
-                    id="city"
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
                     value={formik.values.city}
@@ -518,10 +487,10 @@ const formik = useFormik({
                         : ""
                     }`}
                   >
-                    <option value="">Select City</option>
-                    {cities.map((city) => (
-                      <option key={city.CityId} value={city.CityId}>
-                        {city.CityName}
+                    <option value="">Select</option>
+                    {cities.map((c) => (
+                      <option key={c.CityId} value={c.CityId}>
+                        {c.CityName}
                       </option>
                     ))}
                   </select>
@@ -547,7 +516,6 @@ const formik = useFormik({
                   <input
                     type="text"
                     name="panNumber"
-                    id="panNumber"
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
                     value={formik.values.panNumber}
@@ -627,7 +595,6 @@ const formik = useFormik({
                   <input
                     type="text"
                     name="aadharNumber"
-                    id="aadharNumber"
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
                     value={formik.values.aadharNumber}

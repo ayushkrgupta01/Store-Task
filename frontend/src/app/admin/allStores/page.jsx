@@ -8,6 +8,7 @@ import {
   FaEye,
   FaEdit,
   FaTrash,
+  FaArrowLeft,
 } from "react-icons/fa";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -83,6 +84,13 @@ const AllStores = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-6">
+      <button
+        onClick={() => router.back()}
+        className="flex items-center gap-2 text-indigo-600 hover:text-indigo-700 transition-colors"
+      >
+        <FaArrowLeft />
+        Back
+      </button>
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
@@ -217,7 +225,7 @@ const AllStores = () => {
                               <button
                                 onClick={() =>
                                   router.push(
-                                    `/admin/editStore/${store.StoreId}`
+                                    `/admin/editStore/${store.StoreID}`
                                   )
                                 }
                                 className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded flex items-center gap-1 text-sm transition-colors"

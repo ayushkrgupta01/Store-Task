@@ -10,11 +10,18 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
-import { FaUsers, FaDollarSign, FaShoppingCart, FaSyncAlt, FaStore, FaChartBar } from "react-icons/fa";
+import {
+  FaUsers,
+  FaDollarSign,
+  FaShoppingCart,
+  FaSyncAlt,
+  FaStore,
+  FaChartBar,
+  FaArrowLeft,
+} from "react-icons/fa";
 import axios from "axios";
 import { toast } from "react-toastify";
 import LoadingSpinner from "@/components/LoadingSpinner";
-
 
 const AdminHome = () => {
   const [salesData] = useState([
@@ -52,14 +59,16 @@ const AdminHome = () => {
   }, []);
 
   const domainData = [
-    { name: 'gmail.com', count: 12 },
-    { name: 'yahoo.com', count: 8 },
-    { name: 'outlook.com', count: 5 },
-    { name: 'example.com', count: 3 },
+    { name: "gmail.com", count: 12 },
+    { name: "yahoo.com", count: 8 },
+    { name: "outlook.com", count: 5 },
+    { name: "example.com", count: 3 },
   ];
 
   if (loading) {
-    return <LoadingSpinner size="xl" text="Loading Dashboard..." fullScreen={true} />;
+    return (
+      <LoadingSpinner size="xl" text="Loading Dashboard..." fullScreen={true} />
+    );
   }
 
   return (
@@ -93,31 +102,39 @@ const AdminHome = () => {
                 <FaStore className="text-2xl text-white" />
               </div>
               <div>
-                <h2 className="text-lg font-medium text-gray-600">Total Stores</h2>
-                <p className="text-3xl font-bold text-gray-900">{totalStores}</p>
+                <h2 className="text-lg font-medium text-gray-600">
+                  Total Stores
+                </h2>
+                <p className="text-3xl font-bold text-gray-900">
+                  {totalStores}
+                </p>
               </div>
             </div>
           </div>
-          
+
           <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 hover:shadow-2xl transition-shadow">
             <div className="flex items-center space-x-4">
               <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-green-600 rounded-xl flex items-center justify-center">
                 <FaUsers className="text-2xl text-white" />
               </div>
               <div>
-                <h2 className="text-lg font-medium text-gray-600">Total Customers</h2>
+                <h2 className="text-lg font-medium text-gray-600">
+                  Total Customers
+                </h2>
                 <p className="text-3xl font-bold text-gray-900">0</p>
               </div>
             </div>
           </div>
-          
+
           <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 hover:shadow-2xl transition-shadow">
             <div className="flex items-center space-x-4">
               <div className="w-12 h-12 bg-gradient-to-r from-yellow-500 to-yellow-600 rounded-xl flex items-center justify-center">
                 <FaDollarSign className="text-2xl text-white" />
               </div>
               <div>
-                <h2 className="text-lg font-medium text-gray-600">Total Sales</h2>
+                <h2 className="text-lg font-medium text-gray-600">
+                  Total Sales
+                </h2>
                 <p className="text-3xl font-bold text-gray-900">$0</p>
               </div>
             </div>
@@ -195,22 +212,33 @@ const AdminHome = () => {
               Recent Stores
             </h2>
           </div>
-          
+
           <div className="p-6">
             <div className="overflow-x-auto">
               <table className="w-full border-collapse">
                 <thead>
                   <tr className="text-left text-xs uppercase tracking-wide text-gray-600">
-                    <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">Store Name</th>
-                    <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">Email</th>
-                    <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">Phone</th>
-                    <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">City</th>
+                    <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
+                      Store Name
+                    </th>
+                    <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
+                      Email
+                    </th>
+                    <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
+                      Phone
+                    </th>
+                    <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
+                      City
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   {stores.length > 0 ? (
                     stores.slice(0, 5).map((store, index) => (
-                      <tr key={store.StoreId || index} className="hover:bg-gray-50 text-sm sm:text-[15px] border-t">
+                      <tr
+                        key={store.StoreId || index}
+                        className="hover:bg-gray-50 text-sm sm:text-[15px] border-t"
+                      >
                         <td className="p-3">{store.StoreName || "N/A"}</td>
                         <td className="p-3">{store.Email || "N/A"}</td>
                         <td className="p-3">{store.Phone || "N/A"}</td>
@@ -219,7 +247,10 @@ const AdminHome = () => {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={4} className="p-8 text-center text-gray-500 border-t">
+                      <td
+                        colSpan={4}
+                        className="p-8 text-center text-gray-500 border-t"
+                      >
                         <div className="flex flex-col items-center gap-2">
                           <FaStore className="text-4xl text-gray-300" />
                           <p>No recent stores found</p>
