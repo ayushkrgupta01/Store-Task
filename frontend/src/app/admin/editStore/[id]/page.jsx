@@ -34,32 +34,59 @@ const EditStore = () => {
   const [uploadingPan, setUploadingPan] = useState(false);
   const [uploadingAadhar, setUploadingAadhar] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [storeData, setStoreData] = useState(null);
 
-  const formik = useFormik({
-    initialValues: {
-      storeName: "",
-      email: "",
-      phone: "",
-      address: "",
-      country: "",
-      state: "",
-      city: "",
-      panNumber: "",
-      panNumberAttachment: null,
-      aadharNumber: "",
-      aadharNumberAttachment: null,
-    },
-    validationSchema: Yup.object({
-      storeName: Yup.string().required("Store name is required"),
-      email: Yup.string().email("Invalid email").required("Email is required"),
-      phone: Yup.string().required("Phone is required"),
-      address: Yup.string().required("Address is required"),
-      country: Yup.string().required("Country is required"),
-      state: Yup.string().required("State is required"),
-      city: Yup.string().required("City is required"),
-      panNumber: Yup.string().required("PAN number is required"),
-      aadharNumber: Yup.string().required("Aadhar number is required"),
-    }),
+  const fetchStoreDetails = async (StoreID) => {
+    try {
+      const res = await axios.get(
+        `${process.env.NEXT_PUBLIC_STORE_URL}/GetStoreById`,
+        {
+          params: { id: StoreID }, // ✅ pass as query param
+        }
+      );
+      setStoreData(res.data);
+    } catch (err) {
+      console.error("Error fetching store details", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (id) {
+      fetchStoreDetails(id);
+    }
+  }, [id]);
+
+  if (loading) return <p className="p-4">Loading store details...</p>;
+  if (!storeData) return <p className="p-4 text-red-500">Store not found</p>;
+
+const formik = useFormik({
+  enableReinitialize: true, // <-- important
+  initialValues: {
+    storeName: storeData?.StoreName || "",
+    email: storeData?.Email || "",
+    phone: storeData?.Phone || "",
+    address: storeData?.Address || "",
+    country: storeData?.CountryId || "",
+    state: storeData?.StateId || "",
+    city: storeData?.CityId || "",
+    panNumber: storeData?.PANNumber || "",
+    panNumberAttachment: storeData?.PANNumberAttachment || null,
+    aadharNumber: storeData?.AadharNumber || "",
+    aadharNumberAttachment: storeData?.AadharNumberAttachment || null,
+  },
+  validationSchema: Yup.object({
+    storeName: Yup.string().required("Store name is required"),
+    email: Yup.string().email("Invalid email").required("Email is required"),
+    phone: Yup.string().required("Phone is required"),
+    address: Yup.string().required("Address is required"),
+    country: Yup.string().required("Country is required"),
+    state: Yup.string().required("State is required"),
+    city: Yup.string().required("City is required"),
+    panNumber: Yup.string().required("PAN number is required"),
+    aadharNumber: Yup.string().required("Aadhar number is required"),
+  }),
     onSubmit: async (values) => {
       setIsSubmitting(true);
       try {
@@ -110,7 +137,9 @@ const EditStore = () => {
   useEffect(() => {
     if (formik.values.country) {
       axios
-        .get(`${process.env.NEXT_PUBLIC_STATES_URL}?CountryId=${formik.values.country}`)
+        .get(
+          `${process.env.NEXT_PUBLIC_STATES_URL}?CountryId=${formik.values.country}`
+        )
         .then((res) => setStates(res.data))
         .catch(() => toast.error("Failed to load states."));
     }
@@ -120,7 +149,9 @@ const EditStore = () => {
   useEffect(() => {
     if (formik.values.state) {
       axios
-        .get(`${process.env.NEXT_PUBLIC_CITIES_URL}?StateId=${formik.values.state}`)
+        .get(
+          `${process.env.NEXT_PUBLIC_CITIES_URL}?StateId=${formik.values.state}`
+        )
         .then((res) => setCities(res.data))
         .catch(() => toast.error("Failed to load cities."));
     }
@@ -163,7 +194,7 @@ const EditStore = () => {
     const file = e.target.files[0] || null;
     const field =
       uploadtype === "Pan" ? "panNumberAttachment" : "aadharNumberAttachment";
-    
+
     if (!file) return;
 
     const allowedTypes = ["image/jpeg", "image/png", "image/gif"];
@@ -255,7 +286,7 @@ const EditStore = () => {
               Store Information
             </h2>
           </div>
-          
+
           <div className="p-6 md:p-8">
             <form onSubmit={formik.handleSubmit} className="space-y-6">
               {/* Store Name */}
@@ -322,7 +353,7 @@ const EditStore = () => {
                     </div>
                   )}
                 </div>
-                
+
                 <div>
                   <label
                     htmlFor="phone"
@@ -409,10 +440,7 @@ const EditStore = () => {
                   >
                     <option value="">Select Country</option>
                     {countries.map((country) => (
-                      <option
-                        key={country.CountryId}
-                        value={country.CountryId}
-                      >
+                      <option key={country.CountryId} value={country.CountryId}>
                         {country.CountryName}
                       </option>
                     ))}
@@ -444,14 +472,15 @@ const EditStore = () => {
                       formik.touched.state && formik.errors.state
                         ? "border-red-300"
                         : "border-gray-300"
-                    } ${!formik.values.country ? "bg-gray-100 cursor-not-allowed" : ""}`}
+                    } ${
+                      !formik.values.country
+                        ? "bg-gray-100 cursor-not-allowed"
+                        : ""
+                    }`}
                   >
                     <option value="">Select State</option>
                     {states.map((state) => (
-                      <option
-                        key={state.StateId}
-                        value={state.StateId}
-                      >
+                      <option key={state.StateId} value={state.StateId}>
                         {state.StateName}
                       </option>
                     ))}
@@ -483,14 +512,15 @@ const EditStore = () => {
                       formik.touched.city && formik.errors.city
                         ? "border-red-300"
                         : "border-gray-300"
-                    } ${!formik.values.state ? "bg-gray-100 cursor-not-allowed" : ""}`}
+                    } ${
+                      !formik.values.state
+                        ? "bg-gray-100 cursor-not-allowed"
+                        : ""
+                    }`}
                   >
                     <option value="">Select City</option>
                     {cities.map((city) => (
-                      <option
-                        key={city.CityId}
-                        value={city.CityId}
-                      >
+                      <option key={city.CityId} value={city.CityId}>
                         {city.CityName}
                       </option>
                     ))}
@@ -535,7 +565,7 @@ const EditStore = () => {
                     </div>
                   )}
                 </div>
-                
+
                 <div>
                   <label
                     htmlFor="panNumberAttachment"
@@ -545,7 +575,9 @@ const EditStore = () => {
                     PAN Card Image
                   </label>
                   {panCard && (
-                    <p className="text-sm text-gray-500 mb-2">Current: {panCard}</p>
+                    <p className="text-sm text-gray-500 mb-2">
+                      Current: {panCard}
+                    </p>
                   )}
                   <div className="relative">
                     <input
@@ -558,7 +590,8 @@ const EditStore = () => {
                     <label
                       htmlFor="panNumberAttachment"
                       className={`w-full px-4 py-3 border rounded-lg cursor-pointer transition-colors flex items-center justify-center ${
-                        formik.touched.panNumberAttachment && formik.errors.panNumberAttachment
+                        formik.touched.panNumberAttachment &&
+                        formik.errors.panNumberAttachment
                           ? "border-red-300 bg-red-50"
                           : "border-gray-300 hover:border-indigo-500 hover:bg-indigo-50"
                       }`}
@@ -571,12 +604,13 @@ const EditStore = () => {
                       {panCard ? "Update PAN Card" : "Upload PAN Card"}
                     </label>
                   </div>
-                  {formik.touched.panNumberAttachment && formik.errors.panNumberAttachment && (
-                    <div className="text-red-500 text-sm mt-1 flex items-center">
-                      <FaInfoCircle className="mr-1" />
-                      {formik.errors.panNumberAttachment}
-                    </div>
-                  )}
+                  {formik.touched.panNumberAttachment &&
+                    formik.errors.panNumberAttachment && (
+                      <div className="text-red-500 text-sm mt-1 flex items-center">
+                        <FaInfoCircle className="mr-1" />
+                        {formik.errors.panNumberAttachment}
+                      </div>
+                    )}
                 </div>
               </div>
 
@@ -604,14 +638,15 @@ const EditStore = () => {
                     }`}
                     placeholder="1234 5678 9012"
                   />
-                  {formik.touched.aadharNumber && formik.errors.aadharNumber && (
-                    <div className="text-red-500 text-sm mt-1 flex items-center">
-                      <FaInfoCircle className="mr-1" />
-                      {formik.errors.aadharNumber}
-                    </div>
-                  )}
+                  {formik.touched.aadharNumber &&
+                    formik.errors.aadharNumber && (
+                      <div className="text-red-500 text-sm mt-1 flex items-center">
+                        <FaInfoCircle className="mr-1" />
+                        {formik.errors.aadharNumber}
+                      </div>
+                    )}
                 </div>
-                
+
                 <div>
                   <label
                     htmlFor="aadharNumberAttachment"
@@ -621,7 +656,9 @@ const EditStore = () => {
                     Aadhar Card Image
                   </label>
                   {aadharCard && (
-                    <p className="text-sm text-gray-500 mb-2">Current: {aadharCard}</p>
+                    <p className="text-sm text-gray-500 mb-2">
+                      Current: {aadharCard}
+                    </p>
                   )}
                   <div className="relative">
                     <input
@@ -634,7 +671,8 @@ const EditStore = () => {
                     <label
                       htmlFor="aadharNumberAttachment"
                       className={`w-full px-4 py-3 border rounded-lg cursor-pointer transition-colors flex items-center justify-center ${
-                        formik.touched.aadharNumberAttachment && formik.errors.aadharNumberAttachment
+                        formik.touched.aadharNumberAttachment &&
+                        formik.errors.aadharNumberAttachment
                           ? "border-red-300 bg-red-50"
                           : "border-gray-300 hover:border-indigo-500 hover:bg-indigo-50"
                       }`}
@@ -647,12 +685,13 @@ const EditStore = () => {
                       {aadharCard ? "Update Aadhar Card" : "Upload Aadhar Card"}
                     </label>
                   </div>
-                  {formik.touched.aadharNumberAttachment && formik.errors.aadharNumberAttachment && (
-                    <div className="text-red-500 text-sm mt-1 flex items-center">
-                      <FaInfoCircle className="mr-1" />
-                      {formik.errors.aadharNumberAttachment}
-                    </div>
-                  )}
+                  {formik.touched.aadharNumberAttachment &&
+                    formik.errors.aadharNumberAttachment && (
+                      <div className="text-red-500 text-sm mt-1 flex items-center">
+                        <FaInfoCircle className="mr-1" />
+                        {formik.errors.aadharNumberAttachment}
+                      </div>
+                    )}
                 </div>
               </div>
 
