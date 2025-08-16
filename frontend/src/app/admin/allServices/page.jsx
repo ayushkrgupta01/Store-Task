@@ -24,7 +24,7 @@ const AllStores = () => {
     setLoading(true);
     try {
       const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_STORE_URL}/GetStores`
+        `${process.env.NEXT_PUBLIC_SERVICES_URL}/GetProductService`
       );
       setStores(response.data);
     } catch (error) {
@@ -43,25 +43,7 @@ const AllStores = () => {
     const q = query.trim().toLowerCase();
     if (!q) return true;
     return (
-      String(store.StoreName || "")
-        .toLowerCase()
-        .includes(q) ||
-      String(store.Email || "")
-        .toLowerCase()
-        .includes(q) ||
-      String(store.Phone || "")
-        .toLowerCase()
-        .includes(q) ||
-      String(store.StateName || store.State || "")
-        .toLowerCase()
-        .includes(q) ||
-      String(store.CityName || store.City || "")
-        .toLowerCase()
-        .includes(q) ||
-      String(store.PAN || store.PanNumber || store.PanNo || "")
-        .toLowerCase()
-        .includes(q) ||
-      String(store.Aadhar || store.AadharNumber || store.AadharNo || "")
+      String(store.service_name || "")
         .toLowerCase()
         .includes(q)
     );
@@ -98,14 +80,23 @@ const AllStores = () => {
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mb-6">
           <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
             <div className="relative flex-1">
+              <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search stores..."
-                className="w-full border border-gray-300 rounded-lg px-4 py-2 pl-10 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                placeholder="Search services..."
+                className="w-full rounded-full border border-gray-300 pl-12 pr-10 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm transition-all"
               />
-              <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              {query && (
+                <button
+                  onClick={() => setQuery("")}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  ✕
+                </button>
+              )}
             </div>
+
             <div className="flex gap-2">
               <button
                 onClick={fetchStores}
@@ -130,7 +121,7 @@ const AllStores = () => {
           <div className="bg-gradient-to-r from-indigo-500 to-purple-600 px-6 py-4">
             <h2 className="text-xl font-semibold text-white flex items-center">
               <FaStore className="mr-3" />
-              Store List
+              Services List
             </h2>
           </div>
 
@@ -145,28 +136,7 @@ const AllStores = () => {
                   <thead>
                     <tr className="text-left text-xs uppercase tracking-wide text-gray-600">
                       <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
-                        Store Name
-                      </th>
-                      <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
-                        Email
-                      </th>
-                      <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
-                        Phone
-                      </th>
-                      <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
-                        State
-                      </th>
-                      <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
-                        City
-                      </th>
-                      <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
-                        PAN
-                      </th>
-                      <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
-                        Aadhar
-                      </th>
-                      <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
-                        Actions
+                        Services Name
                       </th>
                     </tr>
                   </thead>
@@ -178,53 +148,7 @@ const AllStores = () => {
                           className="hover:bg-gray-50 text-sm sm:text-[15px]"
                         >
                           <td className="p-3 text-sm border-t truncate">
-                            {getValue(store, ["StoreName"])}
-                          </td>
-                          <td className="p-3 text-sm border-t truncate">
-                            {getValue(store, ["Email"])}
-                          </td>
-                          <td className="p-3 text-sm border-t truncate">
-                            {getValue(store, ["Phone"])}
-                          </td>
-                          <td className="p-3 text-sm border-t truncate">
-                            {getValue(store, ["StateName", "State", "state"])}
-                          </td>
-                          <td className="p-3 text-sm border-t truncate">
-                            {getValue(store, ["CityName", "City", "city"])}
-                          </td>
-                          <td className="p-3 text-sm border-t font-mono truncate">
-                            {getValue(store, ["PAN", "PANNumber", "PanNo"])}
-                          </td>
-                          <td className="p-3 text-sm border-t font-mono truncate">
-                            {getValue(store, [
-                              "Aadhar",
-                              "AadharNumber",
-                              "AadharNo",
-                            ])}
-                          </td>
-                          <td className="p-3 border-t">
-                            <div className="flex flex-wrap gap-2">
-                              <button
-                                onClick={() =>
-                                  router.push(
-                                    `/admin/singleStoreDetails/${store.StoreID}`
-                                  )
-                                }
-                                className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded flex items-center gap-1 text-sm transition-colors"
-                              >
-                                <FaEye /> View
-                              </button>
-                              <button
-                                onClick={() =>
-                                  router.push(
-                                    `/admin/editStore/${store.StoreId}`
-                                  )
-                                }
-                                className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded flex items-center gap-1 text-sm transition-colors"
-                              >
-                                <FaEdit /> Edit
-                              </button>
-                            </div>
+                            {getValue(store, ["service_name"])}
                           </td>
                         </tr>
                       ))
