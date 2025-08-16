@@ -26,12 +26,12 @@ const Services = () => {
     }
   };
 
-  const handleDelete = async (storeId) => {
+  const handleDelete = async (StoreID) => {
     if (!confirm("Are you sure you want to delete this store?")) return;
     try {
-      const res = await axios.post(
+      const res = await axios.delete(
         `${process.env.NEXT_PUBLIC_STORE_URL}/DeleteStore`,
-        { StoreId: storeId, ActionMode: "Delete" }
+        { StoreId: StoreID, ActionMode: "Delete" }
       );
       if (res.data[0].status == "1") {
         toast.success(res.data[0].message);

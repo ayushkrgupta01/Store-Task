@@ -1,64 +1,45 @@
 "use client";
-import React, { useEffect, useState } from "react";
-import axios from "axios";
-import { useRouter } from "next/navigation";
-import { FaEdit, FaTrash, FaInfoCircle } from "react-icons/fa";
+import React, { useState, useEffect } from "react";
+import { FaUsers, FaSearch, FaSyncAlt, FaSpinner, FaEye, FaEdit, FaTrash } from "react-icons/fa";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import axios from "axios";
+import { useRouter } from "next/navigation";
 
-const Customers = () => {
-  const router = useRouter();
-  const [stores, setStores] = useState([]);
-  const [loading, setLoading] = useState(false);
+const AllCustomers = () => {
+  const [customers, setCustomers] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
+  const router = useRouter();
 
-  const fetchStores = async () => {
+  const fetchCustomers = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(
-        `${process.env.NEXT_PUBLIC_STORE_URL}/GetStores`
-      );
-      setStores(res.data);
-    } catch (err) {
-      toast.error("Failed to load stores");
+      const response = await axios.get(`${process.env.NEXT_PUBLIC_STORE_URL}/GetCustomers`);
+      setCustomers(response.data);
+    } catch (error) {
+      console.error("Failed to load customers:", error);
+      toast.error("Failed to load customer data.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDelete = async (storeId) => {
-    if (!confirm("Are you sure you want to delete this store?")) return;
-    try {
-      const res = await axios.post(
-        `${process.env.NEXT_PUBLIC_STORE_URL}/DeleteStore`,
-        { StoreId: storeId, ActionMode: "Delete" }
-      );
-      if (res.data[0].status == "1") {
-        toast.success(res.data[0].message);
-        fetchStores();
-      } else {
-        toast.error(res.data[0].message);
-      }
-    } catch {
-      toast.error("Delete failed");
-    }
-  };
-
   useEffect(() => {
-    fetchStores();
+    fetchCustomers();
   }, []);
 
-  const filtered = stores.filter((s) => {
+  const filtered = customers.filter((customer) => {
     const q = query.trim().toLowerCase();
     if (!q) return true;
     return (
-      String(s.StoreName || "").toLowerCase().includes(q) ||
-      String(s.Email || "").toLowerCase().includes(q) ||
-      String(s.Phone || "").toLowerCase().includes(q) ||
-      String(s.StateName || s.State || "").toLowerCase().includes(q) ||
-      String(s.CityName || s.City || "").toLowerCase().includes(q) ||
-      String(s.PAN || s.PanNumber || s.PanNo || "").toLowerCase().includes(q) ||
-      String(s.Aadhar || s.AadharNumber || s.AadharNo || "").toLowerCase().includes(q)
+      String(customer.CustomerName || "").toLowerCase().includes(q) ||
+      String(customer.Email || "").toLowerCase().includes(q) ||
+      String(customer.Phone || "").toLowerCase().includes(q) ||
+      String(customer.StateName || customer.State || "").toLowerCase().includes(q) ||
+      String(customer.CityName || customer.City || "").toLowerCase().includes(q) ||
+      String(customer.PAN || customer.PanNumber || customer.PanNo || "").toLowerCase().includes(q) ||
+      String(customer.Aadhar || customer.AadharNumber || customer.AadharNo || "").toLowerCase().includes(q)
     );
   });
 
@@ -73,113 +54,138 @@ const Customers = () => {
   };
 
   return (
-    <div className="p-4 min-h-screen bg-gray-50">
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mb-6">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">All Customers</h1>
-          <p className="text-gray-500 mt-1">Search and manage customer stores</p>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-6">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+            All Customers
+          </h1>
+          <p className="text-gray-600 mt-2 text-lg">
+            Manage and view all registered customers
+          </p>
         </div>
-        <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
-          <div className="relative flex-1">
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search by name, email or phone..."
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-            />
+
+        {/* Controls */}
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mb-6">
+          <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+            <div className="relative flex-1">
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search customers..."
+                className="w-full border border-gray-300 rounded-lg px-4 py-2 pl-10 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              />
+              <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={fetchCustomers}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+              >
+                <FaSpinner className={`${loading ? 'animate-spin' : ''}`} />
+                Refresh
+              </button>
+              <button
+                onClick={() => router.push("/admin/customers/add")}
+                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+              >
+                <FaUsers />
+                Add Customer
+              </button>
+            </div>
           </div>
-          <div className="flex gap-2">
-            <button
-              onClick={fetchStores}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded"
-            >
-              Refresh
-            </button>
-            <button
-              onClick={() => router.push("/admin/storeForm")}
-              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
-            >
-              + Add Store
-            </button>
+        </div>
+
+        {/* Content Card */}
+        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+          <div className="bg-gradient-to-r from-indigo-500 to-purple-600 px-6 py-4">
+            <h2 className="text-xl font-semibold text-white flex items-center">
+              <FaUsers className="mr-3" />
+              Customer List
+            </h2>
+          </div>
+          
+          <div className="p-6">
+            {loading ? (
+              <div className="flex items-center justify-center py-12">
+                <FaSpinner className="animate-spin text-4xl text-indigo-500" />
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse min-w-[800px]">
+                  <thead>
+                    <tr className="text-left text-xs uppercase tracking-wide text-gray-600">
+                      <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">Customer Name</th>
+                      <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">Email</th>
+                      <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">Phone</th>
+                      <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">State</th>
+                      <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">City</th>
+                      <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">PAN</th>
+                      <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">Aadhar</th>
+                      <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filtered.length > 0 ? (
+                      filtered.map((customer, index) => (
+                        <tr key={customer.CustomerId || index} className="hover:bg-gray-50 text-sm sm:text-[15px]">
+                          <td className="p-3 border-t truncate">{getValue(customer, ["CustomerName"])}</td>
+                          <td className="p-3 border-t truncate">{getValue(customer, ["Email"])}</td>
+                          <td className="p-3 border-t truncate">{getValue(customer, ["Phone"])}</td>
+                          <td className="p-3 border-t truncate">{getValue(customer, ["StateName", "State", "state"])}</td>
+                          <td className="p-3 border-t truncate">{getValue(customer, ["CityName", "City", "city"])}</td>
+                          <td className="p-3 border-t font-mono truncate">{getValue(customer, ["PAN", "PANNumber", "PanNo"])}</td>
+                          <td className="p-3 border-t font-mono truncate">{getValue(customer, ["Aadhar", "AadharNumber", "AadharNo"])}</td>
+                          <td className="p-3 border-t">
+                            <div className="flex flex-wrap gap-2">
+                              <button
+                                onClick={() => router.push(`/admin/customers/${customer.CustomerId}`)}
+                                className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded flex items-center gap-1 text-sm transition-colors"
+                              >
+                                <FaEye /> View
+                              </button>
+                              <button
+                                onClick={() => router.push(`/admin/customers/edit/${customer.CustomerId}`)}
+                                className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded flex items-center gap-1 text-sm transition-colors"
+                              >
+                                <FaEdit /> Edit
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={8} className="p-8 text-center text-gray-500 border-t">
+                          <div className="flex flex-col items-center gap-2">
+                            <FaUsers className="text-4xl text-gray-300" />
+                            <p>No customers found</p>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </div>
       </div>
-
-      {loading ? (
-        <div className="bg-white rounded-2xl shadow p-6">
-          <div className="animate-pulse space-y-4">
-            <div className="h-6 bg-gray-200 rounded w-1/3"></div>
-            <div className="h-4 bg-gray-200 rounded"></div>
-            <div className="h-4 bg-gray-200 rounded"></div>
-            <div className="h-4 bg-gray-200 rounded"></div>
-            <div className="h-4 bg-gray-200 rounded"></div>
-          </div>
-        </div>
-      ) : (
-        <div className="bg-white rounded-2xl shadow-lg overflow-x-auto ring-1 ring-gray-100">
-          <table className="w-full border-collapse min-w-[1024px]">
-            <thead>
-              <tr className="text-left text-xs uppercase tracking-wide text-gray-600">
-                <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">Store Name</th>
-                <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">Email</th>
-                <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">Phone</th>
-                <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">State</th>
-                <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">City</th>
-                <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">PAN</th>
-                <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">Aadhar</th>
-                <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.length > 0 ? (
-                filtered.map((store, index) => (
-                  <tr key={store.StoreId || index} className="hover:bg-gray-50 text-sm sm:text-[15px]">
-                    <td className="p-3 border-t">{getValue(store, ["StoreName"])}</td>
-                    <td className="p-3 border-t">{getValue(store, ["Email"])}</td>
-                    <td className="p-3 border-t">{getValue(store, ["Phone"])}</td>
-                    <td className="p-3 border-t">{getValue(store, ["StateName", "State", "state"])}</td>
-                    <td className="p-3 border-t">{getValue(store, ["CityName", "City", "city"])}</td>
-                    <td className="p-3 border-t font-mono">{getValue(store, ["PAN", "PanNumber", "PanNo"])}</td>
-                    <td className="p-3 border-t font-mono">{getValue(store, ["Aadhar", "AadharNumber", "AadharNo"])}</td>
-                    <td className="p-3 border-t">
-                      <div className="flex flex-wrap gap-2">
-                        <button
-                          onClick={() => router.push(`/admin/editStore/${store.StoreId}`)}
-                          className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded flex items-center gap-1 text-sm"
-                        >
-                          <FaEdit /> Edit
-                        </button>
-                        <button
-                          onClick={() => handleDelete(store.StoreId)}
-                          className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded flex items-center gap-1 text-sm"
-                        >
-                          <FaTrash /> Delete
-                        </button>
-                        <button
-                          onClick={() => router.push(`/admin/storeDetails/${store.StoreId}`)}
-                          className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded flex items-center gap-1 text-sm"
-                        >
-                          <FaInfoCircle /> Details
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={5} className="p-4 text-center text-gray-500 border">
-                    No stores found
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      <ToastContainer />
+      <ToastContainer 
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
     </div>
   );
 };
 
-export default Customers;
+export default AllCustomers;

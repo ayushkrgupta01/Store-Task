@@ -1,72 +1,154 @@
-import React from 'react';
-import { FaStore, FaLock, FaTimes } from 'react-icons/fa';
+"use client";
+import React from "react";
+import { FaStore, FaCheckCircle, FaCopy, FaTimes, FaEye, FaEyeSlash } from "react-icons/fa";
+import { useState } from "react";
 
 const StoreInfoPopup = ({ storeId, password, onClose }) => {
-  if (!storeId || !password) return null;
+  const [showPassword, setShowPassword] = useState(false);
+  const [copiedField, setCopiedField] = useState(null);
+
+  const copyToClipboard = async (text, field) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedField(field);
+      setTimeout(() => setCopiedField(null), 2000);
+    } catch (err) {
+      console.error('Failed to copy: ', err);
+    }
+  };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900 bg-opacity-75 backdrop-blur-sm">
-      <div className="relative bg-white dark:bg-gray-800 rounded-lg shadow-2xl p-6 sm:p-8 w-full max-w-sm md:max-w-md transform transition-all duration-300 scale-100 opacity-100">
-        <button
-          onClick={onClose}
-          className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-          aria-label="Close"
-        >
-          <FaTimes className="text-xl" />
-        </button>
-
-        <div className="text-center">
-          <div className="flex items-center justify-center mb-4 text-green-500">
-            <svg
-              className="w-16 h-16"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 transform transition-all">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-green-500 to-green-600 rounded-t-2xl px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                <FaCheckCircle className="text-white text-xl" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-white">Store Created Successfully!</h2>
+                <p className="text-green-100 text-sm">Your store has been registered</p>
+              </div>
+            </div>
+            <button
+              onClick={onClose}
+              className="text-white hover:text-green-100 transition-colors"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+              <FaTimes className="text-xl" />
+            </button>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="p-6">
+          <div className="text-center mb-6">
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <FaStore className="text-green-600 text-2xl" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">
+              Store Credentials
+            </h3>
+            <p className="text-gray-600 text-sm">
+              Please save these credentials securely. You'll need them to access your store.
+            </p>
+          </div>
+
+          {/* Store ID */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Store ID
+            </label>
+            <div className="relative">
+              <input
+                type="text"
+                value={storeId}
+                readOnly
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg font-mono text-sm focus:outline-none"
               />
-            </svg>
-          </div>
-          <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">Store Created!</h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-            Your new store has been successfully created. Please save these credentials.
-          </p>
-        </div>
-
-        <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 sm:p-6 space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3 text-gray-600 dark:text-gray-300">
-              <FaStore className="text-lg text-indigo-500" />
-              <span className="font-semibold text-sm sm:text-base">Store ID</span>
+              <button
+                onClick={() => copyToClipboard(storeId, 'storeId')}
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 text-gray-500 hover:text-gray-700 transition-colors"
+              >
+                <FaCopy className={`text-sm ${copiedField === 'storeId' ? 'text-green-500' : ''}`} />
+              </button>
             </div>
-            <span className="text-indigo-600 dark:text-indigo-400 font-mono text-sm sm:text-lg">
-              {storeId}
-            </span>
+            {copiedField === 'storeId' && (
+              <p className="text-green-600 text-xs mt-1">Copied to clipboard!</p>
+            )}
           </div>
 
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3 text-gray-600 dark:text-gray-300">
-              <FaLock className="text-lg text-indigo-500" />
-              <span className="font-semibold text-sm sm:text-base">Password</span>
+          {/* Password */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Password
+            </label>
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                value={password}
+                readOnly
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg font-mono text-sm focus:outline-none pr-20"
+              />
+              <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex space-x-1">
+                <button
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="p-2 text-gray-500 hover:text-gray-700 transition-colors"
+                >
+                  {showPassword ? <FaEyeSlash className="text-sm" /> : <FaEye className="text-sm" />}
+                </button>
+                <button
+                  onClick={() => copyToClipboard(password, 'password')}
+                  className="p-2 text-gray-500 hover:text-gray-700 transition-colors"
+                >
+                  <FaCopy className={`text-sm ${copiedField === 'password' ? 'text-green-500' : ''}`} />
+                </button>
+              </div>
             </div>
-            <span className="text-indigo-600 dark:text-indigo-400 font-mono text-sm sm:text-lg">
-              {password}
-            </span>
+            {copiedField === 'password' && (
+              <p className="text-green-600 text-xs mt-1">Copied to clipboard!</p>
+            )}
           </div>
-        </div>
 
-        <div className="mt-6 text-center">
-          <button
-            onClick={onClose}
-            className="w-full sm:w-auto px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors duration-200"
-          >
-            Got it!
-          </button>
+          {/* Warning */}
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-yellow-800">
+                  Important
+                </h3>
+                <div className="mt-2 text-sm text-yellow-700">
+                  <p>
+                    Please save these credentials in a secure location. You won't be able to see the password again.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="flex space-x-3">
+            <button
+              onClick={onClose}
+              className="flex-1 bg-gray-500 hover:bg-gray-600 text-white py-3 px-4 rounded-lg font-medium transition-colors"
+            >
+              Close
+            </button>
+            <button
+              onClick={() => {
+                copyToClipboard(`Store ID: ${storeId}\nPassword: ${password}`, 'both');
+              }}
+              className="flex-1 bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-lg font-medium transition-colors"
+            >
+              Copy All
+            </button>
+          </div>
         </div>
       </div>
     </div>

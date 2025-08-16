@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
-import { FaEdit, FaTrash, FaInfoCircle } from "react-icons/fa";
+import { FaEdit, FaTrash, FaInfoCircle, FaStore } from "react-icons/fa";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -26,13 +26,18 @@ const ManageStores = () => {
     }
   };
 
-  const handleDelete = async (storeId) => {
+  const handleDelete = async (StoreID) => {
     if (!confirm("Are you sure you want to delete this store?")) return;
+
     try {
-      const res = await axios.post(
+      const res = await axios.delete(
         `${process.env.NEXT_PUBLIC_STORE_URL}/DeleteStore`,
-        { StoreId: storeId, ActionMode: "Delete" }
+        {
+          data: { StoreID: StoreID, ActionMode: "DELETE" }, // 👈 wrap inside "data"
+          headers: { "Content-Type": "application/json" }, // 👈 add content-type
+        }
       );
+
       if (res.data[0].status == "1") {
         toast.success(res.data[0].message);
         fetchStores();
@@ -43,7 +48,6 @@ const ManageStores = () => {
       toast.error("Delete failed");
     }
   };
-
   useEffect(() => {
     fetchStores();
   }, []);
@@ -52,20 +56,38 @@ const ManageStores = () => {
     const q = query.trim().toLowerCase();
     if (!q) return true;
     return (
-      String(s.StoreName || "").toLowerCase().includes(q) ||
-      String(s.Email || "").toLowerCase().includes(q) ||
-      String(s.Phone || "").toLowerCase().includes(q) ||
-      String(s.StateName || s.State || "").toLowerCase().includes(q) ||
-      String(s.CityName || s.City || "").toLowerCase().includes(q) ||
-      String(s.PAN || s.PanNumber || s.PanNo || "").toLowerCase().includes(q) ||
-      String(s.Aadhar || s.AadharNumber || s.AadharNo || "").toLowerCase().includes(q)
+      String(s.StoreName || "")
+        .toLowerCase()
+        .includes(q) ||
+      String(s.Email || "")
+        .toLowerCase()
+        .includes(q) ||
+      String(s.Phone || "")
+        .toLowerCase()
+        .includes(q) ||
+      String(s.StateName || s.State || "")
+        .toLowerCase()
+        .includes(q) ||
+      String(s.CityName || s.City || "")
+        .toLowerCase()
+        .includes(q) ||
+      String(s.PAN || s.PanNumber || s.PanNo || "")
+        .toLowerCase()
+        .includes(q) ||
+      String(s.Aadhar || s.AadharNumber || s.AadharNo || "")
+        .toLowerCase()
+        .includes(q)
     );
   });
 
   const getValue = (obj, keys) => {
     for (const key of keys) {
       const value = obj && obj[key];
-      if (value !== undefined && value !== null && String(value).trim() !== "") {
+      if (
+        value !== undefined &&
+        value !== null &&
+        String(value).trim() !== ""
+      ) {
         return value;
       }
     }
@@ -76,8 +98,12 @@ const ManageStores = () => {
     <div className="p-4 min-h-screen bg-gray-50">
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mb-6">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Manage Stores</h1>
-          <p className="text-gray-500 mt-1">Create, edit and manage your stores</p>
+          <h1 className="text-2xl sm:text-3xl font-extrabold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+            Manage Stores
+          </h1>
+          <p className="text-gray-500 mt-1">
+            Create, edit and manage your stores
+          </p>
         </div>
         <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
           <div className="relative flex-1">
@@ -116,47 +142,92 @@ const ManageStores = () => {
           </div>
         </div>
       ) : (
-        <div className="bg-white rounded-2xl shadow-lg overflow-x-auto ring-1 ring-gray-100">
+        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden hover:shadow-2xl transition-shadow">
+          <div className="bg-gradient-to-r from-indigo-500 to-purple-600 px-6 py-4">
+            <h2 className="text-xl font-semibold text-white flex items-center">
+              <FaStore className="mr-3" />
+              Store Details         </h2>
+          </div>
+          <div className="p-6">
           <table className="w-full border-collapse min-w-[1024px]">
             <thead>
               <tr className="text-left text-xs uppercase tracking-wide text-gray-600">
-                <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">Store Name</th>
-                <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">Email</th>
-                <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">Phone</th>
-                <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">State</th>
-                <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">City</th>
-                <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">PAN</th>
-                <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">Aadhar</th>
-                <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">Actions</th>
+                <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
+                  Store Name
+                </th>
+                <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
+                  Email
+                </th>
+                <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
+                  Phone
+                </th>
+                <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
+                  State
+                </th>
+                <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
+                  City
+                </th>
+                <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
+                  PAN
+                </th>
+                <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
+                  Aadhar
+                </th>
+                <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody>
               {filtered.length > 0 ? (
                 filtered.map((store, index) => (
-                  <tr key={store.StoreId || index} className="hover:bg-gray-50 text-sm sm:text-[15px]">
-                    <td className="p-3 border-t">{getValue(store, ["StoreName"])}</td>
-                    <td className="p-3 border-t">{getValue(store, ["Email"])}</td>
-                    <td className="p-3 border-t">{getValue(store, ["Phone"])}</td>
-                    <td className="p-3 border-t">{getValue(store, ["StateName", "State", "state"])}</td>
-                    <td className="p-3 border-t">{getValue(store, ["CityName", "City", "city"])}</td>
-                    <td className="p-3 border-t font-mono">{getValue(store, ["PAN", "PanNumber", "PanNo"])}</td>
-                    <td className="p-3 border-t font-mono">{getValue(store, ["Aadhar", "AadharNumber", "AadharNo"])}</td>
+                  <tr
+                    key={store.StoreID || index}
+                    className="hover:bg-gray-50 text-sm sm:text-[15px]"
+                  >
+                    <td className="p-3 border-t">
+                      {getValue(store, ["StoreName"])}
+                    </td>
+                    <td className="p-3 border-t">
+                      {getValue(store, ["Email"])}
+                    </td>
+                    <td className="p-3 border-t">
+                      {getValue(store, ["Phone"])}
+                    </td>
+                    <td className="p-3 border-t">
+                      {getValue(store, ["StateName", "State", "state"])}
+                    </td>
+                    <td className="p-3 border-t">
+                      {getValue(store, ["CityName", "City", "city"])}
+                    </td>
+                    <td className="p-3 border-t font-mono">
+                      {getValue(store, ["PAN", "PANNumber", "PanNo"])}
+                    </td>
+                    <td className="p-3 border-t font-mono">
+                      {getValue(store, ["Aadhar", "AadharNumber", "AadharNo"])}
+                    </td>
                     <td className="p-3 border-t">
                       <div className="flex flex-wrap gap-2">
                         <button
-                          onClick={() => router.push(`/admin/editStore/${store.StoreId}`)}
+                          onClick={() =>
+                            router.push(`/admin/editStore/${store.StoreId}`)
+                          }
                           className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded flex items-center gap-1 text-sm"
                         >
                           <FaEdit /> Edit
                         </button>
                         <button
-                          onClick={() => handleDelete(store.StoreId)}
+                          onClick={() => handleDelete(store.StoreID)}
                           className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded flex items-center gap-1 text-sm"
                         >
                           <FaTrash /> Delete
                         </button>
                         <button
-                          onClick={() => router.push(`/admin/storeDetails/${store.StoreId}`)}
+                          onClick={() =>
+                            router.push(
+                              `/admin/singleStoreDetails/${store.StoreID}`
+                            )
+                          }
                           className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded flex items-center gap-1 text-sm"
                         >
                           <FaInfoCircle /> Details
@@ -167,13 +238,17 @@ const ManageStores = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={8} className="p-4 text-center text-gray-500 border">
+                  <td
+                    colSpan={8}
+                    className="p-4 text-center text-gray-500 border"
+                  >
                     No stores found
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
+          </div>
         </div>
       )}
 

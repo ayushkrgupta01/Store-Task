@@ -49,23 +49,33 @@ const StoreForm = () => {
       aadharNumberAttachment: null,
     },
     validationSchema: Yup.object({
-      storeName: Yup.string().required("Store name is required"),
+      storeName: Yup.string()
+        .min(2, "Store name must be at least 2 characters")
+        .max(100, "Store name must be less than 100 characters")
+        .required("Store name is required"),
       email: Yup.string()
-        .email("Invalid email address")
-        .required("Email is required"),
-      phone: Yup.string().required("Phone is required"),
-      address: Yup.string().required("Address is required"),
-      country: Yup.string().required("Country is required"),
-      state: Yup.string().required("State is required"),
-      city: Yup.string().required("City is required"),
-      panNumber: Yup.string().required("PAN number is required"),
-      panNumberAttachment: Yup.mixed().required(
-        "PAN number attachment is required"
-      ),
-      aadharNumber: Yup.string().required("Aadhar number is required"),
-      aadharNumberAttachment: Yup.mixed().required(
-        "Aadhar number attachment is required"
-      ),
+        .email("Please enter a valid email address")
+        .required("Email address is required"),
+      phone: Yup.string()
+        .matches(/^[+]?[\d\s\-\(\)]+$/, "Please enter a valid phone number")
+        .min(10, "Phone number must be at least 10 digits")
+        .max(15, "Phone number must be less than 15 digits")
+        .required("Phone number is required"),
+      address: Yup.string()
+        .min(10, "Address must be at least 10 characters")
+        .max(500, "Address must be less than 500 characters")
+        .required("Complete address is required"),
+      country: Yup.string().required("Please select a country"),
+      state: Yup.string().required("Please select a state"),
+      city: Yup.string().required("Please select a city"),
+      panNumber: Yup.string()
+        .matches(/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/, "Please enter a valid PAN number (e.g., ABCDE1234F)")
+        .required("PAN number is required"),
+      panNumberAttachment: Yup.mixed().required("PAN card image is required"),
+      aadharNumber: Yup.string()
+        .matches(/^[0-9]{4}\s[0-9]{4}\s[0-9]{4}$/, "Please enter a valid Aadhar number (e.g., 1234 5678 9012)")
+        .required("Aadhar number is required"),
+      aadharNumberAttachment: Yup.mixed().required("Aadhar card image is required"),
     }),
     onSubmit: async (values, { resetForm }) => {
       setIsSubmitting(true);
@@ -97,10 +107,6 @@ const StoreForm = () => {
               storeId: response.data[0].NewStoreId,
               password: response.data[0].StorePassword,
             });
-            toast.info(
-              `Store ID: ${response.data[0].NewStoreId} | Password: ${response.data[0].StorePassword}`,
-              { autoClose: 8000 }
-            );
             setShowPopup(true);
           }
           
@@ -109,9 +115,9 @@ const StoreForm = () => {
           setpanCard("");
           
           // Redirect to stores list after 2 seconds
-          setTimeout(() => {
+          {showPopup === false && setTimeout(() => {
             router.push("/admin/allStores");
-          }, 2000);
+          }, 2000);}
         } else {
           toast.error(response.data[0].message);
         }
@@ -125,6 +131,11 @@ const StoreForm = () => {
       }
     },
   });
+
+  const handleClosePopup = () => {
+    setShowPopup(false);
+    setPopupData({ storeId: null, password: null });
+  };
 
   // Effect to fetch countries on initial load
   useEffect(() => {
@@ -265,7 +276,7 @@ const StoreForm = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-6">
-      <div className="">
+      <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-2xl sm:text-3xl font-extrabold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
@@ -707,14 +718,25 @@ const StoreForm = () => {
           </div>
         </div>
         {showPopup && (
-        <StoreInfoPopup
-          storeId={popupData.storeId}
-          password={popupData.password}
-          onClose={handleClosePopup}
-        />
-      )}
+          <StoreInfoPopup
+            storeId={popupData.storeId}
+            password={popupData.password}
+            onClose={handleClosePopup}
+          />
+        )}
       </div>
-      <ToastContainer />
+      <ToastContainer 
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
     </div>
   );
 };

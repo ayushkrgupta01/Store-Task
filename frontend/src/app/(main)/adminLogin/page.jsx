@@ -2,7 +2,8 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import LoadingSpinner from "../../../components/LoadingSpinner";
+import LoadingSpinner from "@/components/LoadingSpinner";
+
 
 const AdminLoginRedirect = () => {
   const router = useRouter();

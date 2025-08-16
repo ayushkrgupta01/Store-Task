@@ -156,7 +156,7 @@ const StoreDetails = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                           <div className="flex items-center space-x-3">
                             <FaInfoCircle className="text-gray-400" />
-                            <span className="text-gray-700 font-mono">{getValue(store, ["PAN", "PanNumber", "PanNo"])}</span>
+                            <span className="text-gray-700 font-mono">{getValue(store, ["PAN", "PANNumber", "PanNo"])}</span>
                           </div>
                           <div className="flex items-center space-x-3">
                             <FaInfoCircle className="text-gray-400" />
@@ -169,7 +169,7 @@ const StoreDetails = () => {
                       <div className="pt-4 border-t border-gray-200">
                         <div className="flex items-center justify-between">
                           <span className="text-sm text-gray-500">Store ID:</span>
-                          <span className="text-sm font-mono text-gray-700">{store.StoreId || "N/A"}</span>
+                          <span className="text-sm font-mono text-gray-700">{store.StoreID || "N/A"}</span>
                         </div>
                       </div>
 
