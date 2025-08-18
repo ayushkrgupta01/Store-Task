@@ -125,7 +125,7 @@ const ManageStores = () => {
       </button>
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div>
+        <div className="mb-8">
           <h1 className="text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
             Manage Stores
           </h1>

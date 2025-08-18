@@ -24,6 +24,8 @@ import { toast } from "react-toastify";
 import LoadingSpinner from "@/components/LoadingSpinner";
 
 const AdminHome = () => {
+  const [customers, setCustomers] = useState([]);
+
   const [salesData] = useState([
     { month: "Jan", sales: 4000, revenue: 2400 },
     { month: "Feb", sales: 3000, revenue: 1398 },
@@ -54,8 +56,24 @@ const AdminHome = () => {
     }
   };
 
+  const allCustomers = async () => {
+    setLoading(true);
+    try {
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_SERVICES_URL}/GetAllCustomer`
+      );
+      setCustomers(response.data || []);
+    } catch (error) {
+      console.error("Failed to load customers:", error);
+      toast.error("Failed to load customer data.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchStores();
+    allCustomers();
   }, []);
 
   const domainData = [
@@ -121,7 +139,9 @@ const AdminHome = () => {
                 <h2 className="text-lg font-medium text-gray-600">
                   Total Customers
                 </h2>
-                <p className="text-3xl font-bold text-gray-900">0</p>
+                <p className="text-3xl font-bold text-gray-900">
+                  {customers.length}
+                </p>
               </div>
             </div>
           </div>
