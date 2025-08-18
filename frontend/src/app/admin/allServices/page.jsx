@@ -19,6 +19,8 @@ const AllStores = () => {
   const [stores, setStores] = useState([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const customersPerPage = 5; // 👈 Change this number for page size
   const router = useRouter();
 
   const fetchStores = async () => {
@@ -60,6 +62,18 @@ const AllStores = () => {
       }
     }
     return "-";
+  };
+
+  // 📌 Pagination logic
+  const totalPages = Math.ceil(filtered.length / customersPerPage);
+  const indexOfLast = currentPage * customersPerPage;
+  const indexOfFirst = indexOfLast - customersPerPage;
+  const currentCustomers = filtered.slice(indexOfFirst, indexOfLast);
+
+  const handlePageChange = (page) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
   };
 
   return (
@@ -147,8 +161,8 @@ const AllStores = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {filtered.length > 0 ? (
-                      filtered.map((store, index) => (
+                    {currentCustomers.length > 0 ? (
+                      currentCustomers.map((store, index) => (
                         <tr
                           key={store.StoreId || index}
                           className="hover:bg-gray-50 text-sm sm:text-[15px]"
@@ -173,6 +187,38 @@ const AllStores = () => {
                     )}
                   </tbody>
                 </table>
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
+                  <div className="flex justify-center items-center gap-2 mt-6 flex-wrap">
+                    <button
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={currentPage === 1}
+                      className="px-3 py-1 border rounded-lg disabled:opacity-50 hover:bg-gray-100"
+                    >
+                      Previous
+                    </button>
+                    {[...Array(totalPages)].map((_, index) => (
+                      <button
+                        key={index}
+                        onClick={() => handlePageChange(index + 1)}
+                        className={`px-3 py-1 border rounded-lg ${
+                          currentPage === index + 1
+                            ? "bg-indigo-600 text-white"
+                            : "hover:bg-gray-100"
+                        }`}
+                      >
+                        {index + 1}
+                      </button>
+                    ))}
+                    <button
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                      className="px-3 py-1 border rounded-lg disabled:opacity-50 hover:bg-gray-100"
+                    >
+                      Next
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>

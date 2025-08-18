@@ -141,7 +141,7 @@ const AdminLoginForm = () => {
                     <img 
                       src="/LogoLight.jpeg" 
                       alt="Logo" 
-                      className="size-24 mx-auto rounded-full shadow-lg border-4 border-white"
+                      className="size-32 mx-auto rounded-full shadow-lg border-4 border-white"
                     />
                   </div>
                   <h1 className="text-3xl font-bold text-gray-800 mb-2">Admin Login</h1>
