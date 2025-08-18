@@ -2,15 +2,15 @@
 
 import { useEffect, useState } from 'react';
 import axios from 'axios';
-import { toast } from 'react-toastify'; // Make sure you have react-toastify installed
+import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { useRouter } from 'next/navigation';
 
-// Ensure this is your actual API endpoint for posting images
 const UPLOAD_URL ='http://122.160.25.202/micron/app/api/api/store/PostUserImage';
 const BACKEND_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_BASE_URL || 'http://122.160.25.202/micron/app/api/api/CustomerDetails';
 
 export default function CustomerForm() {
-  // All state declarations must be inside the component function
+  const navigate = useRouter();
   const [product, setProduct] = useState([]);
   const [panFile, setPanFile] = useState(null);
   const [aadharFile, setAadharFile] = useState(null);
@@ -26,8 +26,8 @@ export default function CustomerForm() {
     customer_aadhar_number: '',
     customer_pan_number: '',
     customer_product_amount: '',
-    customer_aadhar: null, // This will store the uploaded Aadhar filename from the server
-    customer_pancard: null, // This will store the uploaded PAN filename from the server
+    customer_aadhar: '',
+    customer_pancard: '',
     Productservices_Id: '',
   });
 
@@ -36,59 +36,52 @@ export default function CustomerForm() {
     customer_pancard: null,
   });
 
-  // --- Input Change Handler ---
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // --- File Upload Handler ---
   const handleFileUploadChange = async (e, uploadtype) => {
     const file = e.target.files[0] || null;
-
-    // Use a single state object to manage file uploads for better organization
     const setFile = uploadtype === "Pan" ? setPanFile : setAadharFile;
     const setError = uploadtype === "Pan" ? setPanError : setAadharError;
     const setUploading = uploadtype === "Pan" ? setUploadingPan : setUploadingAadhar;
     const setPreview = (url) => setPreviews(prev => ({ ...prev, [uploadtype === "Pan" ? "customer_pancard" : "customer_aadhar"]: url }));
     const formKey = uploadtype === "Pan" ? "customer_pancard" : "customer_aadhar";
 
-    setError(''); // Clear any previous error
-    setPreview(null); // Clear previous preview
+    setError('');
+    setPreview(null);
 
     if (!file) {
       setError("Please select a file.");
       return;
     }
 
-    // Frontend validation
     const allowedTypes = ["image/jpeg", "image/png", "image/gif"];
     if (!allowedTypes.includes(file.type)) {
       setError("Invalid file type. Only JPG, PNG, GIF allowed.");
-      e.target.value = ""; // Reset the file input
+      e.target.value = "";
       return;
     }
 
-    if (file.size > 1 * 1024 * 1024) { // 1MB
+    if (file.size > 1 * 1024 * 1024) {
       setError("File too large. Max size is 1MB.");
-      e.target.value = ""; // Reset the file input
+      e.target.value = "";
       return;
     }
 
-    // Create a local preview URL
     const previewUrl = URL.createObjectURL(file);
     setPreview(previewUrl);
 
     setUploading(true);
     const formDataPayload = new FormData();
     formDataPayload.append("file", file);
-    formDataPayload.append("uploadtype", uploadtype); // Assuming the backend uses this
+    formDataPayload.append("uploadtype", uploadtype);
 
     try {
       const res = await axios.post(UPLOAD_URL, formDataPayload);
 
       if (res.data?.success && res.data?.fileName) {
-        // Update the main form data state with the uploaded file name
         setFormData(prev => ({ ...prev, [formKey]: res.data.fileName }));
         setFile(res.data.fileName);
         toast.success(`${uploadtype} image uploaded successfully!`);
@@ -102,7 +95,6 @@ export default function CustomerForm() {
     }
   };
 
-  // --- Data Fetching ---
   useEffect(() => {
     const fetchProductServices = async () => {
       try {
@@ -117,11 +109,9 @@ export default function CustomerForm() {
     fetchProductServices();
   }, []);
 
-  // --- Form Submission ---
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Final validation before submission
     if (!panFile || !aadharFile) {
         toast.error("Please upload both Aadhar and PAN images.");
         setPanError(panFile ? '' : "PAN image is required.");
@@ -129,7 +119,6 @@ export default function CustomerForm() {
         return;
     }
 
-    // Now, the payload uses the filenames from the state
     const payload = {
         ...formData,
         customer_aadhar: aadharFile,
@@ -148,6 +137,7 @@ export default function CustomerForm() {
       const data = await response.json();
       console.log('Form submitted successfully:', data);
       toast.success('Form submitted successfully!');
+       navigate.push('/store/readCustomer'); 
     } catch (error) {
       console.error('Error submitting form:', error);
       toast.error('Error submitting form. Please try again.');
@@ -186,7 +176,6 @@ export default function CustomerForm() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-6">
-          {/* Customer Info Inputs */}
           {[
             { label: 'Customer Name', name: 'customer_name', type: 'text', placeholder: 'Enter Customer Name' },
             { label: 'Customer Email', name: 'customer_email', type: 'email', placeholder: 'Enter Customer Email' },
@@ -211,7 +200,6 @@ export default function CustomerForm() {
             </div>
           ))}
 
-          {/* File Uploads */}
           {[
             { label: 'Upload Aadhar', uploadtype: 'Aadhar', name: 'customer_aadhar', preview: previews.customer_aadhar, error: aadharError, isUploading: uploadingAadhar },
             { label: 'Upload PAN Card', uploadtype: 'Pan', name: 'customer_pancard', preview: previews.customer_pancard, error: panError, isUploading: uploadingPan },

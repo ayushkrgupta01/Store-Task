@@ -1,7 +1,6 @@
 "use client";
-import axios from "axios";
-import { useRouter } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
+import React, { useState } from "react";
 import {
   FaUsers,
   FaSearch,
@@ -9,46 +8,28 @@ import {
   FaSpinner,
   FaArrowLeft,
 } from "react-icons/fa";
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
 
-const AllCustomers = () => {
-  const [customers, setCustomers] = useState([]);
+const CustomersByStore = () => {
+  const { id } = useParams();
   const [loading, setLoading] = useState(false);
-  const [query, setQuery] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const customersPerPage = 5; // 👈 Change this number for page size
-  const router = useRouter();
 
-  const allCustomers = async () => {
-    setLoading(true);
-    try {
-      const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_SERVICES_URL}/GetAllCustomer`
-      );
-      setCustomers(response.data || []);
-    } catch (error) {
-      console.error("Failed to load customers:", error);
-      toast.error("Failed to load customer data.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    allCustomers();
-  }, []);
-
-  // 🔎 Search filter
   const filtered = customers.filter((customer) => {
     const q = query.trim().toLowerCase();
     if (!q) return true;
 
     return (
-      String(customer.Customer_Name || "").toLowerCase().includes(q) ||
-      String(customer.Customer_Email || "").toLowerCase().includes(q) ||
-      String(customer.Customer_Phone || "").toLowerCase().includes(q) ||
-      String(customer.service_name || "").toLowerCase().includes(q)
+      String(customer.Customer_Name || "")
+        .toLowerCase()
+        .includes(q) ||
+      String(customer.Customer_Email || "")
+        .toLowerCase()
+        .includes(q) ||
+      String(customer.Customer_Phone || "")
+        .toLowerCase()
+        .includes(q) ||
+      String(customer.service_name || "")
+        .toLowerCase()
+        .includes(q)
     );
   });
 
@@ -89,7 +70,7 @@ const AllCustomers = () => {
           <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
             <div className="relative flex-1">
               <input
-                value={query}
+                // value={query}
                 onChange={(e) => {
                   setQuery(e.target.value);
                   setCurrentPage(1); // reset to page 1 on search
@@ -101,7 +82,7 @@ const AllCustomers = () => {
             </div>
             <div className="flex gap-2">
               <button
-                onClick={allCustomers}
+                // onClick={allCustomers}
                 disabled={loading}
                 className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors disabled:opacity-50"
               >
@@ -153,7 +134,7 @@ const AllCustomers = () => {
                         </th>
                       </tr>
                     </thead>
-                    <tbody>
+                    {/* <tbody>
                       {currentCustomers.length > 0 ? (
                         currentCustomers.map((customer) => (
                           <tr
@@ -180,7 +161,7 @@ const AllCustomers = () => {
                           </td>
                         </tr>
                       )}
-                    </tbody>
+                    </tbody> */}
                   </table>
                 </div>
 
@@ -226,4 +207,4 @@ const AllCustomers = () => {
   );
 };
 
-export default AllCustomers;
+export default CustomersByStore;
