@@ -24,8 +24,8 @@ const StoreDetailsPage = () => {
       setLoading(true);
       setError(null);
       const res = await axios.get(
-        `${process.env.NEXT_PUBLIC_STORE_URL}/GetStores`,
-        { params: { StoreID } }
+        `${process.env.NEXT_PUBLIC_STORE_URL}/GetStoreById`, // ✅ Corrected API endpoint
+        { params: { id: StoreID } } // ✅ Using 'id' as the query parameter key
       );
       if (res.data && res.data.length > 0) {
         setStoreData(res.data[0]);
@@ -64,7 +64,9 @@ const StoreDetailsPage = () => {
     return (
       <div className="p-4 flex flex-col items-center justify-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-indigo-500"></div>
-        <p className="mt-4 text-gray-700 font-medium">Loading store details...</p>
+        <p className="mt-4 text-gray-700 font-medium">
+          Loading store details...
+        </p>
       </div>
     );
   }
@@ -125,7 +127,11 @@ const StoreDetailsPage = () => {
               {renderDataField("Store Name", storeData.StoreName, <FaStore />)}
               {renderDataField("Email", storeData.Email, <FaEnvelope />)}
               {renderDataField("Phone", storeData.Phone, <FaPhone />)}
-              {renderDataField("Address", storeData.Address, <FaMapMarkerAlt />)}
+              {renderDataField(
+                "Address",
+                storeData.Address,
+                <FaMapMarkerAlt />
+              )}
               {renderDataField(
                 "Created At",
                 new Date(storeData.CreatedAt).toLocaleDateString(),
@@ -134,11 +140,27 @@ const StoreDetailsPage = () => {
             </div>
 
             <div className="space-y-4">
-              {renderDataField("Country", storeData.CountryName, <FaMapMarkerAlt />)}
-              {renderDataField("State", storeData.StateName, <FaMapMarkerAlt />)}
+              {renderDataField(
+                "Country",
+                storeData.CountryName,
+                <FaMapMarkerAlt />
+              )}
+              {renderDataField(
+                "State",
+                storeData.StateName,
+                <FaMapMarkerAlt />
+              )}
               {renderDataField("City", storeData.CityName, <FaMapMarkerAlt />)}
-              {renderDataField("PAN Number", storeData.PANNumber, <FaFileAlt />)}
-              {renderDataField("Aadhar Number", storeData.AadharNumber, <FaFileAlt />)}
+              {renderDataField(
+                "PAN Number",
+                storeData.PANNumber,
+                <FaFileAlt />
+              )}
+              {renderDataField(
+                "Aadhar Number",
+                storeData.AadharNumber,
+                <FaFileAlt />
+              )}
 
               {/* Attachments */}
               {storeData.PANNumberAttachment && (
