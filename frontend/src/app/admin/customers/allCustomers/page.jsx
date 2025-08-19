@@ -1,5 +1,6 @@
 "use client";
 import axios from "axios";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import {
@@ -94,7 +95,7 @@ const AllCustomers = () => {
                   setQuery(e.target.value);
                   setCurrentPage(1); // reset to page 1 on search
                 }}
-                placeholder="Search by name, email, phone, or service..."
+                placeholder="Search customers..."
                 className="w-full border border-gray-300 rounded-lg px-4 py-2 pl-10 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
               />
               <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -108,10 +109,10 @@ const AllCustomers = () => {
                 <FaSpinner className={`${loading ? "animate-spin" : ""}`} />
                 Refresh
               </button>
-              <button className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
+              <Link href={'/admin/customers/customerForm'} className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
                 <FaPlus />
                 Add Customer
-              </button>
+              </Link>
             </div>
           </div>
         </div>

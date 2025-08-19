@@ -1,178 +1,177 @@
 "use client";
-import React, { useState } from "react";
-import { FaCog, FaSearch, FaPlus, FaSpinner, FaBell } from "react-icons/fa";
-import { ToastContainer } from "react-toastify";
+
+import axios from "axios";
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { FaUserFriends, FaSearch, FaSpinner, FaEye, FaExclamationTriangle, FaArrowLeft } from "react-icons/fa";
 
-const CustomerOption3 = () => {
-  const [loading, setLoading] = useState(false);
-  const [query, setQuery] = useState("");
+const BACKEND_BASE_URL = process.env.NEXT_PUBLIC_SERVICES_URL;
 
-  // Dummy data for demonstration
-  const settings = [
-    { id: 1, category: "Notifications", setting: "Email Notifications", status: "Enabled", description: "Receive email updates about customer activities" },
-    { id: 2, category: "Notifications", setting: "SMS Alerts", status: "Disabled", description: "Get SMS notifications for urgent matters" },
-    { id: 3, category: "Privacy", setting: "Data Retention", status: "Enabled", description: "Store customer data for 2 years" },
-    { id: 4, category: "Privacy", setting: "GDPR Compliance", status: "Enabled", description: "Ensure GDPR compliance for EU customers" },
-    { id: 5, category: "Security", setting: "Two-Factor Authentication", status: "Enabled", description: "Require 2FA for admin access" },
-    { id: 6, category: "Security", setting: "Session Timeout", status: "Enabled", description: "Auto-logout after 30 minutes of inactivity" },
-    { id: 7, category: "Integration", setting: "API Access", status: "Disabled", description: "Allow third-party API integrations" },
-    { id: 8, category: "Integration", setting: "Webhook Notifications", status: "Enabled", description: "Send webhook notifications to external services" },
-  ];
+const AllCustomersDashboard = () => {
+  const router = useRouter();
+  const [customers, setCustomers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
-  const filtered = settings.filter((item) => {
-    const q = query.trim().toLowerCase();
-    if (!q) return true;
-    return (
-      item.category.toLowerCase().includes(q) ||
-      item.setting.toLowerCase().includes(q) ||
-      item.description.toLowerCase().includes(q)
-    );
+  useEffect(() => {
+    const fetchCustomers = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await axios.get(`${BACKEND_BASE_URL}/GetAllCustomer`);
+        if (response.data) {
+          setCustomers(response.data);
+        } else {
+          setCustomers([]);
+        }
+      } catch (err) {
+        console.error("Error fetching customers:", err);
+        setError("Failed to fetch customer data. Please try again later.");
+        toast.error("Failed to load customer list.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCustomers();
+  }, []);
+
+  const handleViewCustomer = (customerId) => {
+    router.push(`/admin/customers/customerDetails/${customerId}`);
+  };
+
+  const filteredCustomers = customers.filter((customer) => {
+    const nameMatch = customer.Customer_Name?.toLowerCase().includes(searchTerm.toLowerCase());
+    const emailMatch = customer.Customer_Email?.toLowerCase().includes(searchTerm.toLowerCase());
+    const phoneMatch = customer.Customer_Phone?.toLowerCase().includes(searchTerm.toLowerCase());
+    return nameMatch || emailMatch || phoneMatch;
   });
 
-  const categories = [...new Set(settings.map(item => item.category))];
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-6">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-            Customer Settings
-          </h1>
-          <p className="text-gray-600 mt-2 text-lg">
-            Configure customer management preferences and system settings
-          </p>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-8">
+      <ToastContainer position="top-right" autoClose={3000} />
+      
+      <button
+        onClick={() => router.back()}
+        className="flex items-center gap-2 text-indigo-600 hover:text-indigo-700 transition-colors mb-4"
+      >
+        <FaArrowLeft />
+        Back
+      </button>
+
+      <div className="max-w-7xl mx-auto">
+        <h1 className="text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-6">
+          All Customers Overview
+        </h1>
+
+        {/* Dashboard Metrics */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-2xl shadow-xl p-6 flex items-center justify-between">
+            <div>
+              <p className="text-indigo-100 font-medium">Total Customers</p>
+              <h2 className="text-3xl font-bold mt-1">
+                {customers.length.toLocaleString()}
+              </h2>
+            </div>
+            <div className="p-3 bg-white bg-opacity-20 rounded-full text-purple-600">
+              <FaUserFriends className="text-2xl" />
+            </div>
+          </div>
         </div>
 
-        {/* Controls */}
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mb-6">
-          <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
-            <div className="relative flex-1">
+        {/* Search Bar and Customer List */}
+        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
+          <div className="mb-6 flex flex-col md:flex-row justify-between items-center">
+            <h2 className="text-2xl font-semibold text-gray-800">Customer List</h2>
+            <div className="relative w-full md:w-80 mt-4 md:mt-0">
               <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search settings..."
-                className="w-full border border-gray-300 rounded-lg px-4 py-2 pl-10 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                type="text"
+                placeholder="Search by name, email, or phone..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
               />
-              <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setLoading(true)}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
-              >
-                <FaSpinner className={`${loading ? 'animate-spin' : ''}`} />
-                Refresh
-              </button>
-              <button className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
-                <FaPlus />
-                Add Setting
-              </button>
+              <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             </div>
           </div>
-        </div>
 
-        {/* Settings Cards by Category */}
-        {categories.map((category) => {
-          const categorySettings = filtered.filter(item => item.category === category);
-          if (categorySettings.length === 0) return null;
-          
-          return (
-            <div key={category} className="mb-8">
-              <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-                <div className="bg-gradient-to-r from-indigo-500 to-purple-600 px-6 py-4">
-                  <h2 className="text-xl font-semibold text-white flex items-center">
-                    <FaCog className="mr-3" />
-                    {category}
-                  </h2>
-                </div>
-                
-                <div className="p-6">
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {categorySettings.map((setting) => (
-                      <div key={setting.id} className="bg-gray-50 rounded-lg p-6 border border-gray-200 hover:shadow-md transition-shadow">
-                        <div className="flex items-start justify-between mb-4">
-                          <div className="flex-1">
-                            <h3 className="text-lg font-semibold text-gray-800 mb-2">{setting.setting}</h3>
-                            <p className="text-gray-600 text-sm">{setting.description}</p>
-                          </div>
-                          <div className="ml-4">
-                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                              setting.status === 'Enabled' 
-                                ? 'bg-green-100 text-green-800' 
-                                : 'bg-red-100 text-red-800'
-                            }`}>
-                              {setting.status}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="flex gap-2">
-                          <button className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                            setting.status === 'Enabled'
-                              ? 'bg-red-500 hover:bg-red-600 text-white'
-                              : 'bg-green-500 hover:bg-green-600 text-white'
-                          }`}>
-                            {setting.status === 'Enabled' ? 'Disable' : 'Enable'}
-                          </button>
-                          <button className="px-4 py-2 rounded-lg text-sm font-medium bg-gray-500 hover:bg-gray-600 text-white transition-colors">
-                            Configure
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
+          {loading ? (
+            <div className="flex justify-center items-center py-20">
+              <FaSpinner className="animate-spin text-4xl text-indigo-500" />
             </div>
-          );
-        })}
-
-        {/* Quick Actions */}
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-          <div className="bg-gradient-to-r from-indigo-500 to-purple-600 px-6 py-4">
-            <h2 className="text-xl font-semibold text-white flex items-center">
-              <FaBell className="mr-3" />
-              Quick Actions
-            </h2>
-          </div>
-          
-          <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <button className="p-4 bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-200 transition-colors">
-                <div className="text-center">
-                  <FaBell className="text-blue-500 text-2xl mx-auto mb-2" />
-                  <p className="font-medium text-blue-800">Notification Settings</p>
-                </div>
-              </button>
-              
-              <button className="p-4 bg-green-50 hover:bg-green-100 rounded-lg border border-green-200 transition-colors">
-                <div className="text-center">
-                  <FaCog className="text-green-500 text-2xl mx-auto mb-2" />
-                  <p className="font-medium text-green-800">Privacy Settings</p>
-                </div>
-              </button>
-              
-              <button className="p-4 bg-purple-50 hover:bg-purple-100 rounded-lg border border-purple-200 transition-colors">
-                <div className="text-center">
-                  <FaCog className="text-purple-500 text-2xl mx-auto mb-2" />
-                  <p className="font-medium text-purple-800">Security Settings</p>
-                </div>
-              </button>
-              
-              <button className="p-4 bg-orange-50 hover:bg-orange-100 rounded-lg border border-orange-200 transition-colors">
-                <div className="text-center">
-                  <FaCog className="text-orange-500 text-2xl mx-auto mb-2" />
-                  <p className="font-medium text-orange-800">Integration Settings</p>
-                </div>
-              </button>
+          ) : error ? (
+            <div className="text-center py-20 text-red-500">
+              <FaExclamationTriangle className="text-5xl mx-auto mb-4" />
+              <p className="font-semibold">{error}</p>
             </div>
-          </div>
+          ) : filteredCustomers.length === 0 ? (
+            <div className="text-center py-20 text-gray-500">
+              <p>No customers found matching your search.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
+                  <tr>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-800 uppercase tracking-wider">
+                      Customer ID
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-800 uppercase tracking-wider">
+                      Name
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-800 uppercase tracking-wider">
+                      Email
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-800 uppercase tracking-wider">
+                      Phone
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-800 uppercase tracking-wider">
+                      Product/Service ID
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-center text-xs font-bold text-gray-800 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {filteredCustomers.map((customer) => (
+                    <tr key={customer.CustomerID} className="hover:bg-gray-100 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                        {customer.CustomerID}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {customer.Customer_Name}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                        {customer.Customer_Email}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                        {customer.Customer_Phone}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                        {customer.Productservices_Id || "N/A"}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+                        <button
+                          onClick={() => handleViewCustomer(customer.CustomerID)}
+                          className="text-blue-600 hover:text-blue-800 transition-colors"
+                          title="View Details"
+                        >
+                          <FaEye className="text-lg" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </div>
-      <ToastContainer />
     </div>
   );
 };
 
-export default CustomerOption3;
+export default AllCustomersDashboard;

@@ -175,14 +175,14 @@ const Sidebar = ({ onNavigate = () => {} }) => {
                       Add Customer
                     </Link>
                   </li>
-                  <li>
+                  {/* <li>
                     <Link
                       href="/admin/customers/customerList"
                       className="flex items-center p-2 pl-11 w-full text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
                     >
                       Customer List
                     </Link>
-                  </li>
+                  </li> */}
                 </ul>
               )}
             </li>

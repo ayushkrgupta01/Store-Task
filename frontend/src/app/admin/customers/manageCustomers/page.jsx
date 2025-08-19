@@ -1,35 +1,35 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { FaUsers, FaSearch, FaPlus, FaSpinner } from 'react-icons/fa';
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import Link from 'next/link';
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { FaUsers, FaSearch, FaPlus, FaSpinner, FaArrowLeft } from "react-icons/fa";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import Link from "next/link";
 
 export default function CustomerOption1() {
   const [user, setUser] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState("");
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [customerToDeleteId, setCustomerToDeleteId] = useState(null);
-  const [successMessage, setSuccessMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const customersPerPage = 5; // adjust page size here
   const router = useRouter();
 
-  const BACKEND_BASE_URL ='http://122.160.25.202/micron/app/api/api/CustomerDetails';
+  const BACKEND_BASE_URL = process.env.NEXT_PUBLIC_SERVICES_URL;
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
         const response = await fetch(`${BACKEND_BASE_URL}/GetAllCustomer`);
-        if (!response.ok) {
-          throw new Error('Server is not fetching data');
-        }
+        if (!response.ok) throw new Error("Server is not fetching data");
         const data = await response.json();
         setUser(data);
       } catch (error) {
-        console.error('Error fetching customers:', error);
+        console.error("Error fetching customers:", error);
       } finally {
         setLoading(false);
       }
@@ -37,12 +37,10 @@ export default function CustomerOption1() {
     fetchData();
   }, [BACKEND_BASE_URL]);
 
-  const handleView = (id) => {
+  const handleView = (id) =>
     router.push(`/admin/customers/customerDetails/${id}`);
-  };
-  const updateCustomer = (id) => {
+  const updateCustomer = (id) =>
     router.push(`/admin/customers/editCustomer/${id}`);
-  };
 
   const handleDeleteInitiate = (id) => {
     setCustomerToDeleteId(id);
@@ -53,22 +51,25 @@ export default function CustomerOption1() {
     if (customerToDeleteId === null) return;
 
     try {
-      const response = await fetch(`${BACKEND_BASE_URL}/DeleteCustomer?id=${customerToDeleteId}`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-      });
+      const response = await fetch(
+        `${BACKEND_BASE_URL}/DeleteCustomer?id=${customerToDeleteId}`,
+        {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+        }
+      );
 
-      if (!response.ok) throw new Error('Failed to delete customer.');
+      if (!response.ok) throw new Error("Failed to delete customer.");
 
       setUser(user.filter((item) => item.CustomerID !== customerToDeleteId));
-      setSuccessMessage('Customer deleted successfully!');
+      setSuccessMessage("Customer deleted successfully!");
     } catch (error) {
-      console.error('Error deleting customer:', error);
-      setSuccessMessage('An error occurred during deletion.');
+      console.error("Error deleting customer:", error);
+      setSuccessMessage("An error occurred during deletion.");
     } finally {
       setShowConfirmModal(false);
       setCustomerToDeleteId(null);
-      setTimeout(() => setSuccessMessage(''), 3000);
+      setTimeout(() => setSuccessMessage(""), 3000);
     }
   };
 
@@ -80,36 +81,68 @@ export default function CustomerOption1() {
   const filtered = user.filter((customer) => {
     const q = query.trim().toLowerCase();
     if (!q) return true;
-    return customer.Customer_Name.toLowerCase().includes(q) || customer.Customer_Email.toLowerCase().includes(q) || customer.Customer_Phone.toLowerCase().includes(q);
+    return (
+      customer.Customer_Name.toLowerCase().includes(q) ||
+      customer.Customer_Email.toLowerCase().includes(q) ||
+      customer.Customer_Phone.toLowerCase().includes(q)
+    );
   });
 
+  // Reset to page 1 whenever search query changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [query]);
+
+  // Pagination logic
+  const totalPages = Math.ceil(filtered.length / customersPerPage);
+  const indexOfLast = currentPage * customersPerPage;
+  const indexOfFirst = indexOfLast - customersPerPage;
+  const currentCustomers = filtered.slice(indexOfFirst, indexOfLast);
+
   return (
-    <div className='min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-2'>
-      <div className='max-w-6xl mx-auto'>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-2">
+      <button
+        onClick={() => router.back()}
+        className="flex items-center gap-2 text-indigo-600 hover:text-indigo-700 transition-colors"
+      >
+        <FaArrowLeft />
+        Back
+      </button>
+      <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className='mb-8'>
-          <h1 className='text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent'>Customer Management</h1>
-          <p className='text-gray-600 mt-2 text-lg'>Manage customer information and preferences</p>
+        <div className="mb-8">
+          <h1 className="text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+            Customer Management
+          </h1>
+          <p className="text-gray-600 mt-2 text-lg">
+            Manage customer information and preferences
+          </p>
         </div>
 
         {/* Controls */}
-        <div className='flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mb-6'>
-          <div className='flex flex-col sm:flex-row gap-3 w-full lg:w-auto'>
-            <div className='relative flex-1'>
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mb-6">
+          <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+            <div className="relative flex-1">
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder='Search customers...'
-                className='w-full border border-gray-300 rounded-lg px-4 py-2 pl-10 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500'
+                placeholder="Search customers..."
+                className="w-full border border-gray-300 rounded-lg px-4 py-2 pl-10 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
               />
-              <FaSearch className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400' />
+              <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             </div>
-            <div className='flex gap-2'>
-              <button onClick={() => setLoading(true)} className='bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors'>
-                <FaSpinner className={`${loading ? 'animate-spin' : ''}`} />
+            <div className="flex gap-2">
+              <button
+                onClick={() => setLoading(true)}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+              >
+                <FaSpinner className={`${loading ? "animate-spin" : ""}`} />
                 Refresh
               </button>
-              <Link href={'/store/addCustomer'} className='bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors'>
+              <Link
+                href={"/admin/customers/customerForm"}
+                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+              >
                 <FaPlus />
                 Add Customer
               </Link>
@@ -118,85 +151,152 @@ export default function CustomerOption1() {
         </div>
 
         {successMessage && (
-          <div className='bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4' role='alert'>
-            <span className='block sm:inline'>{successMessage}</span>
+          <div
+            className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4"
+            role="alert"
+          >
+            <span className="block sm:inline">{successMessage}</span>
           </div>
         )}
 
         {/* Content Card */}
-        <div className='bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden'>
-          <div className='bg-gradient-to-r from-indigo-500 to-purple-600 px-6 py-4'>
-            <h2 className='text-xl font-semibold text-white flex items-center'>
-              <FaUsers className='mr-3' />
+        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+          <div className="bg-gradient-to-r from-indigo-500 to-purple-600 px-6 py-4">
+            <h2 className="text-xl font-semibold text-white flex items-center">
+              <FaUsers className="mr-3" />
               Customer List
             </h2>
           </div>
 
-          <div className='p-6'>
+          <div className="p-6">
             {loading ? (
-              <div className='flex items-center justify-center py-12'>
-                <FaSpinner className='animate-spin text-4xl text-indigo-500' />
+              <div className="flex items-center justify-center py-12">
+                <FaSpinner className="animate-spin text-4xl text-indigo-500" />
               </div>
             ) : (
-              <div className='overflow-x-auto'>
-                <table className='w-full border-collapse'>
-                  <thead>
-                    <tr className='text-left text-xs uppercase tracking-wide text-gray-600'>
-                      <th className='p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0'>Name</th>
-                      <th className='p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0'>Email</th>
-                      <th className='p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0'>Phone</th>
-                      <th className='p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0'>Status</th>
-                      <th className='p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0'>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filtered.length > 0 ? (
-                      filtered.map((item) => (
-                        <tr key={item.CustomerID} className='hover:bg-gray-50 text-sm sm:text-[15px] border-t'>
-                          <td className='p-3'>{item.Customer_Name}</td>
-                          <td className='p-3'>{item.Customer_Email}</td>
-                          <td className='p-3'>{item.Customer_Phone}</td>
-                          <td className='p-3'>
-                            <span
-                              className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                item.Customer_Status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                              }`}>
-                              {item.Customer_Status || 'Active'}
-                            </span>
-                          </td>
-                          <td className='p-3'>
-                            <div className='flex flex-wrap gap-2'>
-                              <button onClick={() => handleView(item.CustomerID)} className='bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm transition-colors'>
-                                View
-                              </button>
-                              <button
-                                onClick={() => updateCustomer(item.CustomerID)}
-                                className='bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-sm transition-colors'>
-                                Edit
-                              </button>
-
-                              <button
-                                onClick={() => handleDeleteInitiate(item.CustomerID)}
-                                className='bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm transition-colors'>
-                                Delete
-                              </button>
+              <>
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse">
+                    <thead>
+                      <tr className="text-left text-xs uppercase tracking-wide text-gray-600">
+                        <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
+                          Name
+                        </th>
+                        <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
+                          Email
+                        </th>
+                        <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
+                          Phone
+                        </th>
+                        <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
+                          Status
+                        </th>
+                        <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {currentCustomers.length > 0 ? (
+                        currentCustomers.map((item) => (
+                          <tr
+                            key={item.CustomerID}
+                            className="hover:bg-gray-50 text-sm sm:text-[15px] border-t"
+                          >
+                            <td className="p-3">{item.Customer_Name}</td>
+                            <td className="p-3">{item.Customer_Email}</td>
+                            <td className="p-3">{item.Customer_Phone}</td>
+                            <td className="p-3">
+                              <span
+                                className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                  item.Customer_Status === "Active"
+                                    ? "bg-green-100 text-green-800"
+                                    : "bg-red-100 text-red-800"
+                                }`}
+                              >
+                                {item.Customer_Status || "Active"}
+                              </span>
+                            </td>
+                            <td className="p-3">
+                              <div className="flex flex-wrap gap-2">
+                                <button
+                                  onClick={() => handleView(item.CustomerID)}
+                                  className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm transition-colors"
+                                >
+                                  View
+                                </button>
+                                <button
+                                  onClick={() =>
+                                    updateCustomer(item.CustomerID)
+                                  }
+                                  className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-sm transition-colors"
+                                >
+                                  Edit
+                                </button>
+                                <button
+                                  onClick={() =>
+                                    handleDeleteInitiate(item.CustomerID)
+                                  }
+                                  className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm transition-colors"
+                                >
+                                  Delete
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td
+                            colSpan={5}
+                            className="p-8 text-center text-gray-500 border-t"
+                          >
+                            <div className="flex flex-col items-center gap-2">
+                              <FaUsers className="text-4xl text-gray-300" />
+                              <p>No customers found</p>
                             </div>
                           </td>
                         </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan={5} className='p-8 text-center text-gray-500 border-t'>
-                          <div className='flex flex-col items-center gap-2'>
-                            <FaUsers className='text-4xl text-gray-300' />
-                            <p>No customers found</p>
-                          </div>
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
+                  <div className="flex justify-center items-center mt-6 space-x-2">
+                    <button
+                      onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                      disabled={currentPage === 1}
+                      className="px-3 py-1 rounded border bg-gray-100 hover:bg-gray-200 disabled:opacity-50"
+                    >
+                      Prev
+                    </button>
+                    {[...Array(totalPages)].map((_, i) => (
+                      <button
+                        key={i}
+                        onClick={() => setCurrentPage(i + 1)}
+                        className={`px-3 py-1 rounded border ${
+                          currentPage === i + 1
+                            ? "bg-indigo-500 text-white"
+                            : "bg-gray-100 hover:bg-gray-200"
+                        }`}
+                      >
+                        {i + 1}
+                      </button>
+                    ))}
+                    <button
+                      onClick={() =>
+                        setCurrentPage((p) => Math.min(p + 1, totalPages))
+                      }
+                      disabled={currentPage === totalPages}
+                      className="px-3 py-1 rounded border bg-gray-100 hover:bg-gray-200 disabled:opacity-50"
+                    >
+                      Next
+                    </button>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>
@@ -204,15 +304,23 @@ export default function CustomerOption1() {
 
       {/* Confirm Delete Modal */}
       {showConfirmModal && (
-        <div className='fixed inset-0 flex justify-center items-center z-50'>
-          <div className='bg-blue-100 p-6 rounded-lg shadow-xl text-center'>
-            <h2 className='text-xl font-bold mb-4'>Confirm Deletion</h2>
-            <p className='mb-6'>Are you sure you want to delete this customer?</p>
-            <div className='flex justify-center space-x-4'>
-              <button onClick={handleDeleteCancel} className='px-4 py-2 bg-gray-300 rounded hover:bg-gray-400 transition'>
+        <div className="fixed inset-0 flex justify-center items-center z-50">
+          <div className="bg-blue-100 p-6 rounded-lg shadow-xl text-center">
+            <h2 className="text-xl font-bold mb-4">Confirm Deletion</h2>
+            <p className="mb-6">
+              Are you sure you want to delete this customer?
+            </p>
+            <div className="flex justify-center space-x-4">
+              <button
+                onClick={handleDeleteCancel}
+                className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400 transition"
+              >
                 Cancel
               </button>
-              <button onClick={handleDeleteConfirm} className='px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition'>
+              <button
+                onClick={handleDeleteConfirm}
+                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition"
+              >
                 Confirm
               </button>
             </div>
