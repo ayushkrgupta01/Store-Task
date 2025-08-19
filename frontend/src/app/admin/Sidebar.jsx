@@ -145,6 +145,14 @@ const Sidebar = ({ onNavigate = () => {} }) => {
                 <ul className="py-2 space-y-2">
                   <li>
                     <Link
+                      href="/admin/customers/customerDashboard"
+                      className="flex items-center p-2 pl-11 w-full text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
+                    >
+                      Customer Dashboard
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
                       href="/admin/customers/allCustomers"
                       className="flex items-center p-2 pl-11 w-full text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
                     >
@@ -153,18 +161,26 @@ const Sidebar = ({ onNavigate = () => {} }) => {
                   </li>
                   <li>
                     <Link
-                      href="/admin/customers/option2"
+                      href="/admin/customers/manageCustomers"
                       className="flex items-center p-2 pl-11 w-full text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
                     >
-                      Option 2
+                      Manage Customers
                     </Link>
                   </li>
                   <li>
                     <Link
-                      href="/admin/customers/option3"
+                      href="/admin/customers/customerForm"
                       className="flex items-center p-2 pl-11 w-full text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
                     >
-                      Option 3
+                      Add Customer
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      href="/admin/customers/customerList"
+                      className="flex items-center p-2 pl-11 w-full text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
+                    >
+                      Customer List
                     </Link>
                   </li>
                 </ul>

@@ -1,31 +1,25 @@
 'use client';
-
-import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
+import React, { useEffect, useState } from 'react';
 
-const UPLOAD_URL ='http://122.160.25.202/micron/app/api/api/store/PostUserImage';
+const UPLOAD_URL = 'http://122.160.25.202/micron/app/api/api/store/PostUserImage';
 const BACKEND_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_BASE_URL || 'http://122.160.25.202/micron/app/api/api/CustomerDetails';
 
-export default function CustomerForm() {
+function UpdateCustomer() {
+  const { id } = useParams();
   const navigate = useRouter();
-  const [product, setProduct] = useState([]);
-  const [panFile, setPanFile] = useState(null);
-  const [aadharFile, setAadharFile] = useState(null);
-  const [uploadingPan, setUploadingPan] = useState(false);
-  const [uploadingAadhar, setUploadingAadhar] = useState(false);
-  const [panError, setPanError] = useState('');
-  const [aadharError, setAadharError] = useState('');
 
   const [formData, setFormData] = useState({
     customer_name: '',
     customer_email: '',
     customer_phone: '',
-    customer_aadhar_number: '',
-    customer_pan_number: '',
-    customer_product_amount: '',
+    Customer_AadharNumber: '',
+    Customer_PanNumber: '',
+    Customer_ProductAmount: '',
     customer_aadhar: '',
     customer_pancard: '',
     Productservices_Id: '',
@@ -36,11 +30,21 @@ export default function CustomerForm() {
     customer_pancard: null,
   });
 
+  const [product, setProduct] = useState([]);
+  const [panFile, setPanFile] = useState(null);
+  const [aadharFile, setAadharFile] = useState(null);
+  const [uploadingPan, setUploadingPan] = useState(false);
+  const [uploadingAadhar, setUploadingAadhar] = useState(false);
+  const [panError, setPanError] = useState('');
+  const [aadharError, setAadharError] = useState('');
+
+  // Handle input changes
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  // Handle file uploads
   const handleFileUploadChange = async (e, uploadtype) => {
     const file = e.target.files[0] || null;
     const setFile = uploadtype === "Pan" ? setPanFile : setAadharFile;
@@ -80,7 +84,6 @@ export default function CustomerForm() {
 
     try {
       const res = await axios.post(UPLOAD_URL, formDataPayload);
-
       if (res.data?.success && res.data?.fileName) {
         setFormData(prev => ({ ...prev, [formKey]: res.data.fileName }));
         setFile(res.data.fileName);
@@ -95,6 +98,7 @@ export default function CustomerForm() {
     }
   };
 
+  // Fetch product services for dropdown
   useEffect(() => {
     const fetchProductServices = async () => {
       try {
@@ -109,35 +113,69 @@ export default function CustomerForm() {
     fetchProductServices();
   }, []);
 
+  // Fetch customer data by ID
+  useEffect(() => {
+    const fetchCustomer = async () => {
+      if (!id) return;
+      try {
+        const response = await fetch(`${BACKEND_BASE_URL}/GetById/${id}`);
+        if (!response.ok) throw new Error('Failed to fetch customer');
+        const data = await response.json();
+        if (data[0]) {
+          const customer = data[0];
+          setFormData({
+            customer_name: customer.Customer_Name || '',
+            customer_email: customer.Customer_Email || '',
+            customer_phone: customer.Customer_Phone || '',
+            Customer_AadharNumber: customer.Customer_AadharNumber || '',
+            Customer_PanNumber: customer.Customer_PanNumber || '',
+            Customer_ProductAmount: customer.Customer_ProductAmount || '',
+            customer_aadhar: customer.Customer_Aadhar || null,
+            customer_pancard: customer.Customer_PanCard || null,
+            Productservices_Id: customer.Productservices_Id || '',
+          });
+          setPreviews({
+            customer_aadhar: customer.Customer_Aadhar || null,
+            customer_pancard: customer.Customer_PanCard || null,
+          });
+          setAadharFile(customer.Customer_Aadhar || null);
+          setPanFile(customer.Customer_PanCard || null);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchCustomer();
+  }, [id]);
+
+  // Submit form
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!panFile || !aadharFile) {
-        toast.error("Please upload both Aadhar and PAN images.");
-        setPanError(panFile ? '' : "PAN image is required.");
-        setAadharError(aadharFile ? '' : "Aadhar image is required.");
-        return;
+      toast.error("Please upload both Aadhar and PAN images.");
+      setPanError(panFile ? '' : "PAN image is required.");
+      setAadharError(aadharFile ? '' : "Aadhar image is required.");
+      return;
     }
 
     const payload = {
-        ...formData,
-        customer_aadhar: aadharFile,
-        customer_pancard: panFile,
+      ...formData,
+      customer_aadhar: aadharFile,
+      customer_pancard: panFile,
     };
 
     try {
-      const response = await fetch(`${BACKEND_BASE_URL}/CreateCustomer`, {
-        method: 'POST',
+      const response = await fetch(`${BACKEND_BASE_URL}/Updaecustomer`, {
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
 
       if (!response.ok) throw new Error('Failed to submit form');
-
       const data = await response.json();
-      console.log('Form submitted successfully:', data);
       toast.success('Form submitted successfully!');
-       navigate.push('/store/readCustomer'); 
+      navigate.push('/store/readCustomer'); 
     } catch (error) {
       console.error('Error submitting form:', error);
       toast.error('Error submitting form. Please try again.');
@@ -147,7 +185,7 @@ export default function CustomerForm() {
   return (
     <>
       <h1 className="max-w-5xl mx-auto w-full h-24 bg-blue-600 text-white font-extrabold text-4xl flex items-center justify-center rounded-xl mt-12 mb-6">
-        Fill All Details
+        Update Details
       </h1>
 
       <form
@@ -176,13 +214,13 @@ export default function CustomerForm() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-6">
-          {[
+          {[ 
             { label: 'Customer Name', name: 'customer_name', type: 'text', placeholder: 'Enter Customer Name' },
             { label: 'Customer Email', name: 'customer_email', type: 'email', placeholder: 'Enter Customer Email' },
             { label: 'Customer Phone', name: 'customer_phone', type: 'tel', placeholder: 'Enter Customer Phone' },
-            { label: 'Customer Aadhar Number', name: 'customer_aadhar_number', type: 'text', placeholder: 'Enter Aadhar Number' },
-            { label: 'Customer PAN Number', name: 'customer_pan_number', type: 'text', placeholder: 'Enter PAN Number' },
-            { label: 'Customer Product Amount', name: 'customer_product_amount', type: 'number', placeholder: 'Enter Amount', min: 0, step: 'any' },
+            { label: 'Customer Aadhar Number', name: 'Customer_AadharNumber', type: 'text', placeholder: 'Enter Aadhar Number' },
+            { label: 'Customer PAN Number', name: 'Customer_PanNumber', type: 'text', placeholder: 'Enter PAN Number' },
+            { label: 'Customer Product Amount', name: 'Customer_ProductAmount', type: 'number', placeholder: 'Enter Amount', min: 0, step: 'any' },
           ].map(({ label, name, type, placeholder, min, step }) => (
             <div key={name}>
               <label className="mb-3 text-base font-semibold text-slate-900 block">{label}</label>
@@ -237,3 +275,5 @@ export default function CustomerForm() {
     </>
   );
 }
+
+export default UpdateCustomer;
