@@ -116,7 +116,7 @@ const EditStore = () => {
           AadharNumberAttachment: aadharCard,
           ActionMode: "UPDATE",
         };
-        const response = await axios.put(
+        const response = await axios.post(
           `${process.env.NEXT_PUBLIC_STORE_URL}/EditStore`,
           storeObject
         );
