@@ -208,6 +208,9 @@ const ManageStores = () => {
                       <thead>
                         <tr className="text-left text-xs uppercase tracking-wide text-gray-600">
                           <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
+                            Store ID
+                          </th>
+                          <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
                             Store Name
                           </th>
                           <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
@@ -240,6 +243,9 @@ const ManageStores = () => {
                               key={store.StoreId || index}
                               className="hover:bg-gray-50 text-sm sm:text-[15px]"
                             >
+                              <td className="p-3 text-sm border-t truncate">
+                                {getValue(store, ["StoreID"])}
+                              </td>
                               <td className="p-3 text-sm border-t truncate">
                                 {getValue(store, ["StoreName"])}
                               </td>

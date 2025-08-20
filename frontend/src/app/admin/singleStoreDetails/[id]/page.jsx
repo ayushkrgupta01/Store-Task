@@ -9,6 +9,8 @@ import {
   FaEnvelope,
   FaMapMarkerAlt,
   FaFileAlt,
+  FaStopCircle,
+  FaUserSecret,
 } from "react-icons/fa";
 
 const StoreDetailsPage = () => {
@@ -136,6 +138,16 @@ const StoreDetailsPage = () => {
                 "Created At",
                 new Date(storeData.CreatedAt).toLocaleDateString(),
                 <FaFileAlt />
+              )}
+              {renderDataField(
+                "Generated Store ID",
+                storeData.GeneratedStoreID,
+                <FaStopCircle />
+              )}
+              {renderDataField(
+                "Generated Store Password",
+                storeData.StorePassword,
+                <FaUserSecret />
               )}
             </div>
 

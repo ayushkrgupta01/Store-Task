@@ -9,6 +9,7 @@ import {
   FaEdit,
   FaTrash,
   FaArrowLeft,
+  FaUserFriends,
 } from "react-icons/fa";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -166,6 +167,9 @@ const AllStores = () => {
                   <thead>
                     <tr className="text-left text-xs uppercase tracking-wide text-gray-600">
                       <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
+                        Store ID
+                      </th>
+                      <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
                         Store Name
                       </th>
                       <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
@@ -198,6 +202,9 @@ const AllStores = () => {
                           key={store.StoreId || index}
                           className="hover:bg-gray-50 text-sm sm:text-[15px]"
                         >
+                          <td className="p-3 text-sm border-t truncate">
+                            {getValue(store, ["StoreID"])}
+                          </td>
                           <td className="p-3 text-sm border-t truncate">
                             {getValue(store, ["StoreName"])}
                           </td>
@@ -244,6 +251,16 @@ const AllStores = () => {
                                 className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded flex items-center gap-1 text-sm transition-colors"
                               >
                                 <FaEdit /> Edit
+                              </button>
+                              <button
+                                onClick={() =>
+                                  router.push(
+                                    `/admin/customersByStore/${store.StoreID}`
+                                  )
+                                }
+                                className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded flex items-center gap-1 text-sm transition-colors"
+                              >
+                                <FaUserFriends /> Customers
                               </button>
                             </div>
                           </td>
