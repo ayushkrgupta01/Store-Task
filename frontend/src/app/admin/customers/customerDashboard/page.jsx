@@ -79,6 +79,17 @@ const AllCustomersDashboard = () => {
               <FaUserFriends className="text-2xl" />
             </div>
           </div>
+          <div className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-2xl shadow-xl p-6 flex items-center justify-between">
+            <div>
+              <p className="text-indigo-100 font-medium">Total Sales</p>
+              <h2 className="text-3xl font-bold mt-1">
+                {customers.length.toLocaleString()}
+              </h2>
+            </div>
+            <div className="p-3 bg-white bg-opacity-20 rounded-full text-purple-600">
+              <FaUserFriends className="text-2xl" />
+            </div>
+          </div>
         </div>
 
         {/* Search Bar and Customer List */}
