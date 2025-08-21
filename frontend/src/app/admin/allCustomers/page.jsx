@@ -12,6 +12,9 @@ import {
 } from "react-icons/fa";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import * as XLSX from "xlsx";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 const AllCustomers = () => {
   const [customers, setCustomers] = useState([]);
@@ -46,12 +49,74 @@ const AllCustomers = () => {
     if (!q) return true;
 
     return (
-      String(customer.Customer_Name || "").toLowerCase().includes(q) ||
-      String(customer.Customer_Email || "").toLowerCase().includes(q) ||
-      String(customer.Customer_Phone || "").toLowerCase().includes(q) ||
-      String(customer.service_name || "").toLowerCase().includes(q)
+      String(customer.Customer_Name || "")
+        .toLowerCase()
+        .includes(q) ||
+      String(customer.Customer_Email || "")
+        .toLowerCase()
+        .includes(q) ||
+      String(customer.Customer_Phone || "")
+        .toLowerCase()
+        .includes(q) ||
+      String(customer.service_name || "")
+        .toLowerCase()
+        .includes(q)
     );
   });
+
+  // Export to Excel function
+  const exportToExcel = () => {
+    const dataToExport = filtered.map((customer) => ({
+      "Customer ID": customer.CustomerID,
+      Name: customer.Customer_Name,
+      Email: customer.Customer_Email,
+      Phone: customer.Customer_Phone,
+      Service: customer.service_name,
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "All Customers");
+    XLSX.writeFile(workbook, "all_customers_data.xlsx");
+  };
+
+  // Export to PDF function
+  const exportToPDF = () => {
+    const doc = new jsPDF();
+    doc.text("All Customers List", 14, 20);
+
+    const tableColumn = ["ID", "Name", "Email", "Phone", "Service"];
+    const tableRows = filtered.map((customer) => [
+      customer.CustomerID,
+      customer.Customer_Name,
+      customer.Customer_Email,
+      customer.Customer_Phone,
+      customer.service_name,
+    ]);
+
+    autoTable(doc, {
+      head: [tableColumn],
+      body: tableRows,
+      startY: 25,
+      styles: {
+        cellPadding: 3,
+        fontSize: 10,
+        valign: "middle",
+        halign: "left",
+        textColor: [0, 0, 0],
+        lineColor: [180, 180, 180],
+        lineWidth: 0.1,
+      },
+      headStyles: {
+        fillColor: [52, 58, 64],
+        textColor: [255, 255, 255],
+        fontSize: 12,
+        fontStyle: "bold",
+      },
+    });
+
+    doc.save("all_customers_data.pdf");
+  };
 
   // 📌 Pagination logic
   const totalPages = Math.ceil(filtered.length / customersPerPage);
@@ -109,11 +174,29 @@ const AllCustomers = () => {
                 <FaSpinner className={`${loading ? "animate-spin" : ""}`} />
                 Refresh
               </button>
-              {/* <Link href={'/admin/customers/customerForm'} className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
+              <Link
+                href={"/admin/customers/customerForm"}
+                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+              >
                 <FaPlus />
                 Add Customer
-              </Link> */}
+              </Link>
             </div>
+          </div>
+          {/* New Export Buttons */}
+          <div className="flex justify-end gap-2 w-full lg:w-auto mt-4 lg:mt-0">
+            <button
+              onClick={exportToPDF}
+              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors"
+            >
+              Download PDF
+            </button>
+            <button
+              onClick={exportToExcel}
+              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors"
+            >
+              Export to Excel
+            </button>
           </div>
         </div>
 

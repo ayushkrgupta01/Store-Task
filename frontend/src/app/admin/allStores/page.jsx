@@ -15,6 +15,9 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import axios from "axios";
 import { useRouter } from "next/navigation";
+import * as XLSX from "xlsx";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 const AllStores = () => {
   const [stores, setStores] = useState([]);
@@ -85,6 +88,75 @@ const AllStores = () => {
     return "-";
   };
 
+  // Export to Excel function
+  const exportToExcel = () => {
+    const dataToExport = filtered.map((store) => ({
+      "Store ID": getValue(store, ["StoreID"]),
+      "Store Name": getValue(store, ["StoreName"]),
+      Email: getValue(store, ["Email"]),
+      Phone: getValue(store, ["Phone"]),
+      State: getValue(store, ["StateName", "State", "state"]),
+      City: getValue(store, ["CityName", "City", "city"]),
+      PAN: getValue(store, ["PAN", "PANNumber", "PanNo"]),
+      Aadhar: getValue(store, ["Aadhar", "AadharNumber", "AadharNo"]),
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "All Stores");
+    XLSX.writeFile(workbook, "all_stores_data.xlsx");
+  };
+
+  // Export to PDF function
+  const exportToPDF = () => {
+    const doc = new jsPDF();
+    doc.text("All Stores List", 14, 20);
+
+    const tableColumn = [
+      "ID",
+      "Name",
+      "Email",
+      "Phone",
+      "State",
+      "City",
+      "PAN",
+      "Aadhar",
+    ];
+    const tableRows = filtered.map((store) => [
+      getValue(store, ["StoreID"]),
+      getValue(store, ["StoreName"]),
+      getValue(store, ["Email"]),
+      getValue(store, ["Phone"]),
+      getValue(store, ["StateName", "State", "state"]),
+      getValue(store, ["CityName", "City", "city"]),
+      getValue(store, ["PAN", "PANNumber", "PanNo"]),
+      getValue(store, ["Aadhar", "AadharNumber", "AadharNo"]),
+    ]);
+
+    autoTable(doc, {
+      head: [tableColumn],
+      body: tableRows,
+      startY: 25,
+      styles: {
+        cellPadding: 3,
+        fontSize: 8, // Smaller font size for more columns
+        valign: "middle",
+        halign: "left",
+        textColor: [0, 0, 0],
+        lineColor: [180, 180, 180],
+        lineWidth: 0.1,
+      },
+      headStyles: {
+        fillColor: [52, 58, 64],
+        textColor: [255, 255, 255],
+        fontSize: 10,
+        fontStyle: "bold",
+      },
+    });
+
+    doc.save("all_stores_data.pdf");
+  };
+
   const totalPages = Math.ceil(filtered.length / customersPerPage);
   const indexOfLast = currentPage * customersPerPage;
   const indexOfFirst = indexOfLast - customersPerPage;
@@ -144,6 +216,21 @@ const AllStores = () => {
                 Add Store
               </button>
             </div>
+          </div>
+          {/* New Export Buttons */}
+          <div className="flex justify-end gap-2 w-full lg:w-auto mt-4 lg:mt-0">
+            <button
+              onClick={exportToPDF}
+              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors"
+            >
+              Download PDF
+            </button>
+            <button
+              onClick={exportToExcel}
+              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors"
+            >
+              Export to Excel
+            </button>
           </div>
         </div>
 

@@ -14,8 +14,11 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import axios from "axios";
 import { useRouter } from "next/navigation";
+import * as XLSX from "xlsx";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
-const AllStores = () => {
+const AllServices = () => {
   const [stores, setStores] = useState([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
@@ -45,9 +48,7 @@ const AllStores = () => {
   const filtered = stores.filter((store) => {
     const q = query.trim().toLowerCase();
     if (!q) return true;
-    return String(store.service_name || "")
-      .toLowerCase()
-      .includes(q);
+    return String(store.service_name || "").toLowerCase().includes(q);
   });
 
   const getValue = (obj, keys) => {
@@ -62,6 +63,53 @@ const AllStores = () => {
       }
     }
     return "-";
+  };
+
+  // Export to Excel function
+  const exportToExcel = () => {
+    const dataToExport = filtered.map((store) => ({
+      "Service ID": store.service_id,
+      "Service Name": store.service_name,
+    }));
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "All Services");
+    XLSX.writeFile(workbook, "all_services_data.xlsx");
+  };
+
+  // Export to PDF function
+  const exportToPDF = () => {
+    const doc = new jsPDF();
+    doc.text("All Services List", 14, 20);
+
+    const tableColumn = ["ID", "Service Name"];
+    const tableRows = filtered.map((store) => [
+      store.service_id,
+      store.service_name,
+    ]);
+
+    autoTable(doc, {
+      head: [tableColumn],
+      body: tableRows,
+      startY: 25,
+      styles: {
+        cellPadding: 3,
+        fontSize: 10,
+        valign: "middle",
+        halign: "left",
+        textColor: [0, 0, 0],
+        lineColor: [180, 180, 180],
+        lineWidth: 0.1,
+      },
+      headStyles: {
+        fillColor: [52, 58, 64],
+        textColor: [255, 255, 255],
+        fontSize: 12,
+        fontStyle: "bold",
+      },
+    });
+
+    doc.save("all_services_data.pdf");
   };
 
   // 📌 Pagination logic
@@ -133,6 +181,21 @@ const AllStores = () => {
                 Add Store
               </button>
             </div>
+          </div>
+          {/* New Export Buttons */}
+          <div className="flex justify-end gap-2 w-full lg:w-auto mt-4 lg:mt-0">
+            <button
+              onClick={exportToPDF}
+              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors"
+            >
+              Download PDF
+            </button>
+            <button
+              onClick={exportToExcel}
+              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors"
+            >
+              Export to Excel
+            </button>
           </div>
         </div>
 
@@ -240,4 +303,4 @@ const AllStores = () => {
   );
 };
 
-export default AllStores;
+export default AllServices;
