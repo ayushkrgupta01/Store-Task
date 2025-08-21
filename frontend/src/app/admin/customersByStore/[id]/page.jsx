@@ -14,6 +14,9 @@ import {
 } from "react-icons/fa";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import * as XLSX from "xlsx";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 const CustomersByStore = () => {
   const { id } = useParams();
@@ -66,11 +69,20 @@ const CustomersByStore = () => {
       return customers;
     }
     const q = query.trim().toLowerCase();
-    return customers.filter((customer) =>
-      (String(customer.Customer_Name || "").toLowerCase().includes(q) ||
-        String(customer.Customer_Email || "").toLowerCase().includes(q) ||
-        String(customer.Customer_phone || "").toLowerCase().includes(q) ||
-        String(customer.service_name || "").toLowerCase().includes(q))
+    return customers.filter(
+      (customer) =>
+        String(customer.Customer_Name || "")
+          .toLowerCase()
+          .includes(q) ||
+        String(customer.Customer_Email || "")
+          .toLowerCase()
+          .includes(q) ||
+        String(customer.Customer_phone || "")
+          .toLowerCase()
+          .includes(q) ||
+        String(customer.service_name || "")
+          .toLowerCase()
+          .includes(q)
     );
   }, [customers, query]);
 
@@ -111,7 +123,9 @@ const CustomersByStore = () => {
       }
 
       // Update the customers list locally
-      setCustomers(customers.filter((item) => item.CustomerID !== customerToDeleteId));
+      setCustomers(
+        customers.filter((item) => item.CustomerID !== customerToDeleteId)
+      );
       toast.success("Customer deleted successfully!");
     } catch (error) {
       console.error("Error deleting customer:", error);
@@ -125,6 +139,59 @@ const CustomersByStore = () => {
   const handleDeleteCancel = () => {
     setShowConfirmModal(false);
     setCustomerToDeleteId(null);
+  };
+
+  // Export to Excel function
+  const exportToExcel = () => {
+    const dataToExport = filteredCustomers.map((customer) => ({
+      "Customer ID": customer.CustomerID,
+      "Customer Name": customer.Customer_Name,
+      Email: customer.Customer_Email,
+      Phone: customer.Customer_phone,
+      "Service Name": customer.service_name,
+    }));
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Customers");
+    XLSX.writeFile(workbook, `customers_for_${storeName}_store.xlsx`);
+  };
+
+  // Export to PDF function
+  const exportToPDF = () => {
+    const doc = new jsPDF();
+    doc.text(`Customers for ${storeName} Store`, 14, 20);
+
+    const tableColumn = ["ID", "Name", "Email", "Phone", "Service"];
+    const tableRows = filteredCustomers.map((customer) => [
+      customer.CustomerID,
+      customer.Customer_Name,
+      customer.Customer_Email,
+      customer.Customer_phone,
+      customer.service_name,
+    ]);
+
+    autoTable(doc, {
+      head: [tableColumn],
+      body: tableRows,
+      startY: 25,
+      styles: {
+        cellPadding: 3,
+        fontSize: 10,
+        valign: "middle",
+        halign: "left",
+        textColor: [0, 0, 0],
+        lineColor: [180, 180, 180],
+        lineWidth: 0.1,
+      },
+      headStyles: {
+        fillColor: [52, 58, 64],
+        textColor: [255, 255, 255],
+        fontSize: 12,
+        fontStyle: "bold",
+      },
+    });
+
+    doc.save(`customers_for_${storeName}_store.pdf`);
   };
 
   return (
@@ -158,7 +225,7 @@ const CustomersByStore = () => {
                   setQuery(e.target.value);
                   setCurrentPage(1); // Reset to first page on search
                 }}
-                placeholder="Search by name, email, phone, or service..."
+                placeholder="Search customers..."
                 className="w-full border border-gray-300 rounded-lg px-4 py-2 pl-10 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
               />
               <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -180,6 +247,21 @@ const CustomersByStore = () => {
                 Add Customer
               </button>
             </div>
+          </div>
+          {/* New Export Buttons */}
+          <div className="flex justify-end gap-2 w-full lg:w-auto mt-4 lg:mt-0">
+            <button
+              onClick={exportToPDF}
+              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors"
+            >
+              Download PDF
+            </button>
+            <button
+              onClick={exportToExcel}
+              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors"
+            >
+              Export to Excel
+            </button>
           </div>
         </div>
 
@@ -226,19 +308,25 @@ const CustomersByStore = () => {
                             <td className="p-3 text-center">
                               <div className="flex flex-wrap gap-2 justify-center">
                                 <button
-                                  onClick={() => handleView(customer.CustomerID)}
+                                  onClick={() =>
+                                    handleView(customer.CustomerID)
+                                  }
                                   className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm transition-colors flex items-center gap-1"
                                 >
                                   <FaEye className="inline" /> View
                                 </button>
                                 <button
-                                  onClick={() => handleUpdate(customer.CustomerID)}
+                                  onClick={() =>
+                                    handleUpdate(customer.CustomerID)
+                                  }
                                   className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-sm transition-colors flex items-center gap-1"
                                 >
                                   <FaEdit className="inline" /> Edit
                                 </button>
                                 <button
-                                  onClick={() => handleDeleteInitiate(customer.CustomerID)}
+                                  onClick={() =>
+                                    handleDeleteInitiate(customer.CustomerID)
+                                  }
                                   className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm transition-colors flex items-center gap-1"
                                 >
                                   <FaTrash className="inline" /> Delete
@@ -308,7 +396,8 @@ const CustomersByStore = () => {
           <div className="bg-white p-6 rounded-lg shadow-xl text-center border-t-4 border-red-500 transform transition-all duration-300 scale-95 md:scale-100">
             <h2 className="text-xl font-bold mb-4">Confirm Deletion</h2>
             <p className="mb-6 text-gray-700">
-              Are you sure you want to delete this customer? This action cannot be undone.
+              Are you sure you want to delete this customer? This action cannot
+              be undone.
             </p>
             <div className="flex justify-center space-x-4">
               <button
