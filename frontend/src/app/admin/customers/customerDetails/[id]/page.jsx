@@ -122,6 +122,7 @@ export default function CustomerDetails() {
               {renderDataField('Email', user.Customer_Email, <FaEnvelope />)}
               {renderDataField('Phone', user.Customer_Phone, <FaPhone />)}
               {renderDataField('Service', user.service_name, <FaFileAlt />)}
+              {renderDataField('Store ID', user.StoreID, <FaFileAlt />)}
             </div>
 
             <div className="space-y-4">

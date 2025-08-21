@@ -37,6 +37,7 @@ const AdminHome = () => {
   ]);
 
   const [totalStores, setTotalStores] = useState(0);
+  const [totalSales, setTotalSales] = useState(0);
   const [loading, setLoading] = useState(true);
   const [stores, setStores] = useState([]);
 
@@ -69,11 +70,29 @@ const AdminHome = () => {
     } finally {
       setLoading(false);
     }
+  }; 
+  
+  // New function to fetch total sales
+  const fetchTotalSales = async () => {
+    setLoading(true);
+    try {
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_SERVICES_URL}/Customertotalbalce`
+      ); // The API returns an array, so we access the first element
+      const total = response.data[0]?.TotalBalance || 0;
+      setTotalSales(total);
+    } catch (error) {
+      console.error("Failed to fetch total sales:", error);
+      toast.error("Failed to load total sales data.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
     fetchStores();
     allCustomers();
+    fetchTotalSales();
   }, []);
 
   const domainData = [
@@ -155,7 +174,10 @@ const AdminHome = () => {
                 <h2 className="text-lg font-medium text-gray-600">
                   Total Sales
                 </h2>
-                <p className="text-3xl font-bold text-gray-900">$0</p>
+                <p className="text-3xl font-bold text-gray-900">
+                  {" "}
+                  ${totalSales.toLocaleString()}
+                </p>
               </div>
             </div>
           </div>

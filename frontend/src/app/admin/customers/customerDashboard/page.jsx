@@ -5,7 +5,15 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { FaUserFriends, FaSearch, FaSpinner, FaEye, FaExclamationTriangle, FaArrowLeft } from "react-icons/fa";
+import {
+  FaUserFriends,
+  FaSearch,
+  FaSpinner,
+  FaEye,
+  FaExclamationTriangle,
+  FaArrowLeft,
+  FaDollarSign,
+} from "react-icons/fa";
 
 const BACKEND_BASE_URL = process.env.NEXT_PUBLIC_SERVICES_URL;
 
@@ -15,6 +23,11 @@ const AllCustomersDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [totalSales, setTotalSales] = useState(0);
+
+  // --- PAGINATION STATE ---
+  const [currentPage, setCurrentPage] = useState(1);
+  const customersPerPage = 10; // Adjust this number to change the page size
 
   useEffect(() => {
     const fetchCustomers = async () => {
@@ -38,21 +51,60 @@ const AllCustomersDashboard = () => {
     fetchCustomers();
   }, []);
 
+  const fetchTotalSales = async () => {
+    setLoading(true);
+    try {
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_SERVICES_URL}/Customertotalbalce`
+      );
+      const total = response.data[0]?.TotalBalance || 0;
+      setTotalSales(total);
+    } catch (error) {
+      console.error("Failed to fetch total sales:", error);
+      toast.error("Failed to load total sales data.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTotalSales();
+  }, []);
+
   const handleViewCustomer = (customerId) => {
     router.push(`/admin/customers/customerDetails/${customerId}`);
   };
 
   const filteredCustomers = customers.filter((customer) => {
-    const nameMatch = customer.Customer_Name?.toLowerCase().includes(searchTerm.toLowerCase());
-    const emailMatch = customer.Customer_Email?.toLowerCase().includes(searchTerm.toLowerCase());
-    const phoneMatch = customer.Customer_Phone?.toLowerCase().includes(searchTerm.toLowerCase());
+    const nameMatch = customer.Customer_Name?.toLowerCase().includes(
+      searchTerm.toLowerCase()
+    );
+    const emailMatch = customer.Customer_Email?.toLowerCase().includes(
+      searchTerm.toLowerCase()
+    );
+    const phoneMatch = customer.Customer_Phone?.toLowerCase().includes(
+      searchTerm.toLowerCase()
+    );
     return nameMatch || emailMatch || phoneMatch;
   });
+
+  // --- PAGINATION LOGIC ---
+  const indexOfLastCustomer = currentPage * customersPerPage;
+  const indexOfFirstCustomer = indexOfLastCustomer - customersPerPage;
+  const currentCustomers = filteredCustomers.slice(
+    indexOfFirstCustomer,
+    indexOfLastCustomer
+  );
+  const totalPages = Math.ceil(filteredCustomers.length / customersPerPage);
+
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-8">
       <ToastContainer position="top-right" autoClose={3000} />
-      
+
       <button
         onClick={() => router.back()}
         className="flex items-center gap-2 text-indigo-600 hover:text-indigo-700 transition-colors mb-4"
@@ -83,11 +135,11 @@ const AllCustomersDashboard = () => {
             <div>
               <p className="text-indigo-100 font-medium">Total Sales</p>
               <h2 className="text-3xl font-bold mt-1">
-                {customers.length.toLocaleString()}
+                ${totalSales.toLocaleString()}
               </h2>
             </div>
             <div className="p-3 bg-white bg-opacity-20 rounded-full text-purple-600">
-              <FaUserFriends className="text-2xl" />
+              <FaDollarSign className="text-2xl" />
             </div>
           </div>
         </div>
@@ -95,13 +147,18 @@ const AllCustomersDashboard = () => {
         {/* Search Bar and Customer List */}
         <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
           <div className="mb-6 flex flex-col md:flex-row justify-between items-center">
-            <h2 className="text-2xl font-semibold text-gray-800">Customer List</h2>
+            <h2 className="text-2xl font-semibold text-gray-800">
+              Customer List
+            </h2>
             <div className="relative w-full md:w-80 mt-4 md:mt-0">
               <input
                 type="text"
                 placeholder="Search by name, email, or phone..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1); // Reset to first page on new search
+                }}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
               />
               <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -122,62 +179,119 @@ const AllCustomersDashboard = () => {
               <p>No customers found matching your search.</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
-                  <tr>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-800 uppercase tracking-wider">
-                      Customer ID
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-800 uppercase tracking-wider">
-                      Name
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-800 uppercase tracking-wider">
-                      Email
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-800 uppercase tracking-wider">
-                      Phone
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-800 uppercase tracking-wider">
-                      Product/Service ID
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-center text-xs font-bold text-gray-800 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredCustomers.map((customer) => (
-                    <tr key={customer.CustomerID} className="hover:bg-gray-100 transition-colors">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                        {customer.CustomerID}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {customer.Customer_Name}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                        {customer.Customer_Email}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                        {customer.Customer_Phone}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                        {customer.Productservices_Id || "N/A"}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
-                        <button
-                          onClick={() => handleViewCustomer(customer.CustomerID)}
-                          className="text-blue-600 hover:text-blue-800 transition-colors"
-                          title="View Details"
-                        >
-                          <FaEye className="text-lg" />
-                        </button>
-                      </td>
+            <>
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
+                    <tr>
+                      <th
+                        scope="col"
+                        className="px-6 py-3 text-left text-xs font-bold text-gray-800 uppercase tracking-wider"
+                      >
+                        Customer ID
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-6 py-3 text-left text-xs font-bold text-gray-800 uppercase tracking-wider"
+                      >
+                        Name
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-6 py-3 text-left text-xs font-bold text-gray-800 uppercase tracking-wider"
+                      >
+                        Email
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-6 py-3 text-left text-xs font-bold text-gray-800 uppercase tracking-wider"
+                      >
+                        Phone
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-6 py-3 text-left text-xs font-bold text-gray-800 uppercase tracking-wider"
+                      >
+                        Product/Service ID
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-6 py-3 text-center text-xs font-bold text-gray-800 uppercase tracking-wider"
+                      >
+                        Actions
+                      </th>
                     </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {currentCustomers.map((customer) => (
+                      <tr
+                        key={customer.CustomerID}
+                        className="hover:bg-gray-100 transition-colors"
+                      >
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                          {customer.CustomerID}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          {customer.Customer_Name}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                          {customer.Customer_Email}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                          {customer.Customer_Phone}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                          {customer.Productservices_Id || "N/A"}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+                          <button
+                            onClick={() =>
+                              handleViewCustomer(customer.CustomerID)
+                            }
+                            className="text-blue-600 hover:text-blue-800 transition-colors"
+                            title="View Details"
+                          >
+                            <FaEye className="text-lg" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {/* --- PAGINATION CONTROLS --- */}
+              {totalPages > 1 && (
+                <div className="flex justify-center items-center space-x-2 mt-6">
+                  <button
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    Previous
+                  </button>
+                  {[...Array(totalPages).keys()].map((page) => (
+                    <button
+                      key={page + 1}
+                      onClick={() => handlePageChange(page + 1)}
+                      className={`px-4 py-2 text-sm font-medium rounded-md shadow-sm transition-colors ${
+                        currentPage === page + 1
+                          ? "bg-indigo-600 text-white"
+                          : "text-gray-700 bg-white border border-gray-300 hover:bg-gray-50"
+                      }`}
+                    >
+                      {page + 1}
+                    </button>
                   ))}
-                </tbody>
-              </table>
-            </div>
+                  <button
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    Next
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
