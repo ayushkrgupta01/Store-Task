@@ -51,7 +51,7 @@ const ManageStores = () => {
 
   const handleDelete = async (storeId) => {
     try {
-      const res = await axios.post(
+      const res = await axios.delete(
         `${process.env.NEXT_PUBLIC_STORE_URL}/DeleteStore`,
         {
           data: { StoreID: storeId, ActionMode: "DELETE" },

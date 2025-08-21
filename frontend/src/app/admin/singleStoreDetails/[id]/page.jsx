@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useParams, useRouter } from "next/navigation";
+import Image from "next/image"; // ✅ Import the Image component for optimized image handling
 import {
   FaArrowLeft,
   FaStore,
@@ -16,21 +17,30 @@ import {
 const StoreDetailsPage = () => {
   const { id } = useParams();
   const [storeData, setStoreData] = useState(null);
+  const [storeImage, setStoreImage] = useState(null); // ✅ State to hold the image URL
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const router = useRouter();
 
-  // ✅ Fetch store details by ID
+  // Function to fetch store details by ID
   const fetchStoreDetails = async (StoreID) => {
     try {
       setLoading(true);
       setError(null);
       const res = await axios.get(
-        `${process.env.NEXT_PUBLIC_STORE_URL}/GetStoreById`, // ✅ Corrected API endpoint
-        { params: { id: StoreID } } // ✅ Using 'id' as the query parameter key
+        `${process.env.NEXT_PUBLIC_STORE_URL}/GetStoreById`,
+        { params: { id: StoreID } }
       );
+
       if (res.data && res.data.length > 0) {
         setStoreData(res.data[0]);
+        // ✅ Assuming your API response includes a property like 'StoreImageName'
+        const imageFileName = res.data[0].StoreImageName; 
+        if (imageFileName) {
+          // Construct the full image URL. Adjust the path if needed.
+          const fullImageUrl = `http://122.160.25.202/micron/app/uploads/${imageFileName}`;
+          setStoreImage(fullImageUrl);
+        }
       } else {
         setError("Store not found.");
       }
@@ -61,7 +71,7 @@ const StoreDetailsPage = () => {
     </div>
   );
 
-  // UI states
+  // UI states remain the same
   if (loading) {
     return (
       <div className="p-4 flex flex-col items-center justify-center h-64">
@@ -121,6 +131,23 @@ const StoreDetailsPage = () => {
               Details for {storeData.StoreName}
             </p>
           </div>
+
+          {/* Image Preview Section */}
+          {storeImage && (
+            <div className="p-6">
+              <h3 className="text-xl font-bold text-gray-800 mb-4">Store Image Preview</h3>
+              <div className="relative w-full h-64 rounded-xl overflow-hidden shadow-lg border border-gray-200">
+                <Image
+                  src={storeImage}
+                  alt={`Image for ${storeData.StoreName}`}
+                  layout="fill"
+                  objectFit="cover"
+                  className="rounded-xl"
+                  unoptimized // Use this if you don't configure remotePatterns in next.config.js
+                />
+              </div>
+            </div>
+          )}
 
           {/* Details Grid */}
           <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">

@@ -2,8 +2,14 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { FaUsers, FaSearch, FaPlus, FaSpinner, FaArrowLeft } from "react-icons/fa";
-import { ToastContainer } from "react-toastify";
+import {
+  FaUsers,
+  FaSearch,
+  FaPlus,
+  FaSpinner,
+  FaArrowLeft,
+} from "react-icons/fa";
+import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Link from "next/link";
 
@@ -62,10 +68,10 @@ export default function CustomerOption1() {
       if (!response.ok) throw new Error("Failed to delete customer.");
 
       setUser(user.filter((item) => item.CustomerID !== customerToDeleteId));
-      setSuccessMessage("Customer deleted successfully!");
+      toast.success("Customer deleted successfully!");
     } catch (error) {
       console.error("Error deleting customer:", error);
-      setSuccessMessage("An error occurred during deletion.");
+      toast.error("An error occurred during deletion.");
     } finally {
       setShowConfirmModal(false);
       setCustomerToDeleteId(null);
@@ -139,13 +145,13 @@ export default function CustomerOption1() {
                 <FaSpinner className={`${loading ? "animate-spin" : ""}`} />
                 Refresh
               </button>
-              <Link
+              {/* <Link
                 href={"/admin/customers/customerForm"}
                 className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
               >
                 <FaPlus />
                 Add Customer
-              </Link>
+              </Link> */}
             </div>
           </div>
         </div>
@@ -304,11 +310,12 @@ export default function CustomerOption1() {
 
       {/* Confirm Delete Modal */}
       {showConfirmModal && (
-        <div className="fixed inset-0 flex justify-center items-center z-50">
-          <div className="bg-blue-100 p-6 rounded-lg shadow-xl text-center">
+        <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-xl text-center border-t-4 border-red-500 transform transition-all duration-300 scale-95 md:scale-100">
             <h2 className="text-xl font-bold mb-4">Confirm Deletion</h2>
-            <p className="mb-6">
-              Are you sure you want to delete this customer?
+            <p className="mb-6 text-gray-700">
+              Are you sure you want to delete this customer? This action cannot
+              be undone.
             </p>
             <div className="flex justify-center space-x-4">
               <button
@@ -327,7 +334,6 @@ export default function CustomerOption1() {
           </div>
         </div>
       )}
-
       <ToastContainer />
     </div>
   );

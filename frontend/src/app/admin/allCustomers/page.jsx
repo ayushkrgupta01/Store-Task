@@ -109,10 +109,10 @@ const AllCustomers = () => {
                 <FaSpinner className={`${loading ? "animate-spin" : ""}`} />
                 Refresh
               </button>
-              <Link href={'/admin/customers/customerForm'} className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
+              {/* <Link href={'/admin/customers/customerForm'} className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
                 <FaPlus />
                 Add Customer
-              </Link>
+              </Link> */}
             </div>
           </div>
         </div>
