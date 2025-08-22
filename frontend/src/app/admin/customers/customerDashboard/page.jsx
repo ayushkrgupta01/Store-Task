@@ -102,7 +102,7 @@ const AllCustomersDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-2">
       <ToastContainer position="top-right" autoClose={3000} />
 
       <button
@@ -113,7 +113,7 @@ const AllCustomersDashboard = () => {
         Back
       </button>
 
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         <h1 className="text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-6">
           All Customers Overview
         </h1>
@@ -145,7 +145,7 @@ const AllCustomersDashboard = () => {
         </div>
 
         {/* Search Bar and Customer List */}
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
+        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
           <div className="mb-6 flex flex-col md:flex-row justify-between items-center">
             <h2 className="text-2xl font-semibold text-gray-800">
               Customer List
