@@ -4,6 +4,7 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useRouter, useParams } from "next/navigation";
 import React, { useEffect, useState } from "react";
+import Image from "next/image"; // ✅ Import the Image component
 import {
   FaUser,
   FaEnvelope,
@@ -17,8 +18,8 @@ import {
   FaLaptop,
 } from "react-icons/fa";
 
-const UPLOAD_URL = process.env.NEXT_PUBLIC_STORE_URL + "/uploads";
 const BACKEND_BASE_URL = process.env.NEXT_PUBLIC_SERVICES_URL;
+const NEXT_PUBLIC_IMAGE_BASE_URL = process.env.NEXT_PUBLIC_IMAGE_BASE_URL;
 
 function UpdateCustomer() {
   const { id } = useParams();
@@ -31,8 +32,8 @@ function UpdateCustomer() {
     Customer_AadharNumber: "",
     Customer_PanNumber: "",
     Customer_ProductAmount: "",
-    customer_aadhar: "",
-    customer_pancard: "",
+    customer_aadhar: "", // This will hold the Aadhar image filename
+    customer_pancard: "", // This will hold the PAN card image filename
     Productservices_Id: "",
   });
 
@@ -76,7 +77,7 @@ function UpdateCustomer() {
     formDataPayload.append("uploadtype", uploadType);
 
     try {
-      const res = await axios.post(UPLOAD_URL, formDataPayload);
+      const res = await axios.post(NEXT_PUBLIC_IMAGE_BASE_URL, formDataPayload);
       if (res.data?.success && res.data?.fileName) {
         setFormData((prev) => ({ ...prev, [formKey]: res.data.fileName }));
         toast.success(`${uploadType} image uploaded successfully!`);
@@ -136,7 +137,6 @@ function UpdateCustomer() {
     fetchCustomer();
   }, [id]);
 
-  
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -177,13 +177,10 @@ function UpdateCustomer() {
       );
 
       // 4. Handle the success response based on the HTTP status code.
-      // The backend is not sending a status field, so we assume success if the call is successful.
       if (response.status === 200) {
         toast.success("Customer details updated successfully!");
-        // Redirect to the customer management page on success.
         navigate.push("/admin/customers/manageCustomers");
       } else {
-        // Handle cases where the HTTP status code is not 200.
         toast.error("Failed to update customer. Unexpected server response.");
       }
     } catch (error) {
@@ -389,16 +386,18 @@ function UpdateCustomer() {
                         : "Upload Aadhar Card"}
                     </label>
                   </div>
+                  {/* FIX: Use a consistent URL structure and the correct Next.js Image component */}
                   {formData.customer_aadhar && (
-                    <img
-                      src={
-                        formData.customer_aadhar.startsWith("http")
-                          ? formData.customer_aadhar
-                          : `http://122.160.25.202/micron/app/api/assets/img/Customer/${formData.customer_aadhar}`
-                      }
-                      alt="Aadhar preview"
-                      className="mt-4 w-48 h-32 object-contain border rounded-md shadow-sm"
-                    />
+                    <div className="relative mt-4 w-full h-32 md:h-48">
+                      <Image
+                        src={`${NEXT_PUBLIC_IMAGE_BASE_URL}/${formData.customer_aadhar}`}
+                        alt="Aadhar preview"
+                        layout="fill"
+                        objectFit="contain"
+                        className="rounded-md shadow-sm border border-gray-200"
+                        unoptimized // Use unoptimized if the image is from a non-configured remote host
+                      />
+                    </div>
                   )}
                 </div>
 
@@ -437,16 +436,18 @@ function UpdateCustomer() {
                         : "Upload PAN Card"}
                     </label>
                   </div>
+                  {/* FIX: Use a consistent URL structure and the correct Next.js Image component */}
                   {formData.customer_pancard && (
-                    <img
-                      src={
-                        formData.customer_pancard.startsWith("http")
-                          ? formData.customer_pancard
-                          : `http://122.160.25.202/micron/app/api/assets/img/Customer/${formData.customer_pancard}`
-                      }
-                      alt="PAN preview"
-                      className="mt-4 w-48 h-32 object-contain border rounded-md shadow-sm"
-                    />
+                    <div className="relative mt-4 w-full h-32 md:h-48">
+                      <Image
+                        src={`${NEXT_PUBLIC_IMAGE_BASE_URL}/${formData.customer_pancard}`}
+                        alt="PAN preview"
+                        layout="fill"
+                        objectFit="contain"
+                        className="rounded-md shadow-sm border border-gray-200"
+                        unoptimized // Use unoptimized if the image is from a non-configured remote host
+                      />
+                    </div>
                   )}
                 </div>
               </div>

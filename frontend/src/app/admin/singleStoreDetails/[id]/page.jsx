@@ -22,6 +22,8 @@ const StoreDetailsPage = () => {
   const [error, setError] = useState(null);
   const router = useRouter();
 
+  const NEXT_PUBLIC_IMAGE_BASE_URL = process.env.NEXT_PUBLIC_IMAGE_BASE_URL;
+
   // Function to fetch store details by ID
   const fetchStoreDetails = async (StoreID) => {
     try {
@@ -35,10 +37,11 @@ const StoreDetailsPage = () => {
       if (res.data && res.data.length > 0) {
         setStoreData(res.data[0]);
         // ✅ Assuming your API response includes a property like 'StoreImageName'
-        const imageFileName = res.data[0].StoreImageName; 
+        const imageFileName = res.data[0].StoreImageName;
         if (imageFileName) {
           // Construct the full image URL. Adjust the path if needed.
-          const fullImageUrl = `http://122.160.25.202/micron/app/uploads/${imageFileName}`;
+          // const fullImageUrl = `http://122.160.25.202/micron/app/uploads/${imageFileName}`;
+          const fullImageUrl = `http://122.160.25.202/uploads/${imageFileName}`;
           setStoreImage(fullImageUrl);
         }
       } else {
@@ -135,7 +138,9 @@ const StoreDetailsPage = () => {
           {/* Image Preview Section */}
           {storeImage && (
             <div className="p-6">
-              <h3 className="text-xl font-bold text-gray-800 mb-4">Store Image Preview</h3>
+              <h3 className="text-xl font-bold text-gray-800 mb-4">
+                Store Image Preview
+              </h3>
               <div className="relative w-full h-64 rounded-xl overflow-hidden shadow-lg border border-gray-200">
                 <Image
                   src={storeImage}
@@ -208,7 +213,7 @@ const StoreDetailsPage = () => {
                     PAN Attachment:
                   </span>
                   <a
-                    href={storeData.PANNumberAttachment}
+                    href={`${NEXT_PUBLIC_IMAGE_BASE_URL}/${storeData.PANNumberAttachment}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-indigo-600 hover:underline font-medium"
@@ -224,7 +229,7 @@ const StoreDetailsPage = () => {
                     Aadhar Attachment:
                   </span>
                   <a
-                    href={storeData.AadharNumberAttachment}
+                    href={`${NEXT_PUBLIC_IMAGE_BASE_URL}/${storeData.AadharNumberAttachment}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-indigo-600 hover:underline font-medium"

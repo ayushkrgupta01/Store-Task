@@ -17,6 +17,8 @@ import {
   FaUpload,
   FaSpinner,
   FaArrowLeft,
+  FaEye,
+  FaTimesCircle,
 } from "react-icons/fa";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -34,6 +36,10 @@ const EditStore = () => {
   const [uploadingPan, setUploadingPan] = useState(false);
   const [uploadingAadhar, setUploadingAadhar] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  // New state variables for image previews
+  const [panPreviewUrl, setPanPreviewUrl] = useState(null);
+  const [aadharPreviewUrl, setAadharPreviewUrl] = useState(null);
 
   // ✅ Fetch store details
   useEffect(() => {
@@ -60,6 +66,18 @@ const EditStore = () => {
             });
             setPanCard(s.PANNumberAttachment || "");
             setAadharCard(s.AadharNumberAttachment || "");
+
+            // Set initial preview URLs if attachments exist
+            if (s.PANNumberAttachment) {
+              setPanPreviewUrl(
+                `${process.env.NEXT_PUBLIC_IMAGE_BASE_URL}/${s.PANNumberAttachment}`
+              );
+            }
+            if (s.AadharNumberAttachment) {
+              setAadharPreviewUrl(
+                `${process.env.NEXT_PUBLIC_IMAGE_BASE_URL}/${s.AadharNumberAttachment}`
+              );
+            }
           }
           setLoading(false);
         })
@@ -173,15 +191,40 @@ const EditStore = () => {
     const field =
       uploadtype === "Pan" ? "panNumberAttachment" : "aadharNumberAttachment";
 
-    if (!file) return;
+    if (!file) {
+      if (uploadtype === "Pan") {
+        setPanPreviewUrl(null);
+      } else {
+        setAadharPreviewUrl(null);
+      }
+      return;
+    }
+
+    // Set file preview URL
+    const fileUrl = URL.createObjectURL(file);
+    if (uploadtype === "Pan") {
+      setPanPreviewUrl(fileUrl);
+    } else {
+      setAadharPreviewUrl(fileUrl);
+    }
 
     const allowedTypes = ["image/jpeg", "image/png", "image/gif"];
     if (!allowedTypes.includes(file.type)) {
       toast.error("Invalid file type. Only JPG, PNG, GIF allowed.");
+      if (uploadtype === "Pan") {
+        setPanPreviewUrl(null);
+      } else {
+        setAadharPreviewUrl(null);
+      }
       return;
     }
     if (file.size > 1 * 1024 * 1024) {
       toast.error("File too large (max 1MB).");
+      if (uploadtype === "Pan") {
+        setPanPreviewUrl(null);
+      } else {
+        setAadharPreviewUrl(null);
+      }
       return;
     }
 
@@ -219,6 +262,18 @@ const EditStore = () => {
       } else {
         setUploadingAadhar(false);
       }
+    }
+  };
+
+  const clearImage = (type) => {
+    if (type === "pan") {
+      setPanCard("");
+      setPanPreviewUrl(null);
+      formik.setFieldValue("panNumberAttachment", "");
+    } else if (type === "aadhar") {
+      setAadharCard("");
+      setAadharPreviewUrl(null);
+      formik.setFieldValue("aadharNumberAttachment", "");
     }
   };
 
@@ -542,11 +597,6 @@ const EditStore = () => {
                     <FaFileAlt className="mr-2 text-indigo-500" />
                     PAN Card Image
                   </label>
-                  {panCard && (
-                    <p className="text-sm text-gray-500 mb-2">
-                      Current: {panCard}
-                    </p>
-                  )}
                   <div className="relative">
                     <input
                       type="file"
@@ -558,9 +608,8 @@ const EditStore = () => {
                     <label
                       htmlFor="panNumberAttachment"
                       className={`w-full px-4 py-3 border rounded-lg cursor-pointer transition-colors flex items-center justify-center ${
-                        formik.touched.panNumberAttachment &&
-                        formik.errors.panNumberAttachment
-                          ? "border-red-300 bg-red-50"
+                        panPreviewUrl
+                          ? "bg-green-100 border-green-400"
                           : "border-gray-300 hover:border-indigo-500 hover:bg-indigo-50"
                       }`}
                     >
@@ -572,6 +621,22 @@ const EditStore = () => {
                       {panCard ? "Update PAN Card" : "Upload PAN Card"}
                     </label>
                   </div>
+                  {panPreviewUrl && (
+                    <div className="relative mt-4">
+                      <img
+                        src={panPreviewUrl}
+                        alt="PAN Card Preview"
+                        className="w-full h-auto max-h-48 object-contain rounded-lg border border-gray-200 shadow-md"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => clearImage("pan")}
+                        className="absolute top-2 right-2 text-red-500 hover:text-red-700 transition-colors"
+                      >
+                        <FaTimesCircle className="text-2xl" />
+                      </button>
+                    </div>
+                  )}
                   {formik.touched.panNumberAttachment &&
                     formik.errors.panNumberAttachment && (
                       <div className="text-red-500 text-sm mt-1 flex items-center">
@@ -622,11 +687,6 @@ const EditStore = () => {
                     <FaFileAlt className="mr-2 text-indigo-500" />
                     Aadhar Card Image
                   </label>
-                  {aadharCard && (
-                    <p className="text-sm text-gray-500 mb-2">
-                      Current: {aadharCard}
-                    </p>
-                  )}
                   <div className="relative">
                     <input
                       type="file"
@@ -638,9 +698,8 @@ const EditStore = () => {
                     <label
                       htmlFor="aadharNumberAttachment"
                       className={`w-full px-4 py-3 border rounded-lg cursor-pointer transition-colors flex items-center justify-center ${
-                        formik.touched.aadharNumberAttachment &&
-                        formik.errors.aadharNumberAttachment
-                          ? "border-red-300 bg-red-50"
+                        aadharPreviewUrl
+                          ? "bg-green-100 border-green-400"
                           : "border-gray-300 hover:border-indigo-500 hover:bg-indigo-50"
                       }`}
                     >
@@ -652,6 +711,22 @@ const EditStore = () => {
                       {aadharCard ? "Update Aadhar Card" : "Upload Aadhar Card"}
                     </label>
                   </div>
+                  {aadharPreviewUrl && (
+                    <div className="relative mt-4">
+                      <img
+                        src={aadharPreviewUrl}
+                        alt="Aadhar Card Preview"
+                        className="w-full h-auto max-h-48 object-contain rounded-lg border border-gray-200 shadow-md"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => clearImage("aadhar")}
+                        className="absolute top-2 right-2 text-red-500 hover:text-red-700 transition-colors"
+                      >
+                        <FaTimesCircle className="text-2xl" />
+                      </button>
+                    </div>
+                  )}
                   {formik.touched.aadharNumberAttachment &&
                     formik.errors.aadharNumberAttachment && (
                       <div className="text-red-500 text-sm mt-1 flex items-center">
