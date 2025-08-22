@@ -8,12 +8,17 @@ import {
   FaPlus,
   FaSpinner,
   FaArrowLeft,
+  FaEye,
+  FaEdit,
+  FaTrashAlt,
+  FaSyncAlt,
+  FaCalendarAlt,
 } from "react-icons/fa";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Link from "next/link";
 
-export default function CustomerOption1() {
+export default function manageCustomers() {
   const [user, setUser] = useState([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
@@ -21,27 +26,39 @@ export default function CustomerOption1() {
   const [customerToDeleteId, setCustomerToDeleteId] = useState(null);
   const [successMessage, setSuccessMessage] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const customersPerPage = 10; // adjust page size here
+  const [dateRange, setDateRange] = useState({
+    startDate: "",
+    endDate: "",
+  });
+  const customersPerPage = 10;
   const router = useRouter();
 
   const BACKEND_BASE_URL = process.env.NEXT_PUBLIC_SERVICES_URL;
 
+  const fetchCustomers = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${BACKEND_BASE_URL}/GetAllCustomer`);
+      if (!response.ok) throw new Error("Server is not fetching data");
+      const data = await response.json();
+      setUser(data);
+    } catch (error) {
+      console.error("Error fetching customers:", error);
+      toast.error("Failed to fetch customers.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const response = await fetch(`${BACKEND_BASE_URL}/GetAllCustomer`);
-        if (!response.ok) throw new Error("Server is not fetching data");
-        const data = await response.json();
-        setUser(data);
-      } catch (error) {
-        console.error("Error fetching customers:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
+    fetchCustomers();
   }, [BACKEND_BASE_URL]);
+
+  const handleRefresh = () => {
+    setQuery("");
+    setDateRange({ startDate: "", endDate: "" });
+    fetchCustomers();
+  };
 
   const handleView = (id) =>
     router.push(`/admin/customers/customerDetails/${id}`);
@@ -57,7 +74,7 @@ export default function CustomerOption1() {
     if (customerToDeleteId === null) return;
 
     try {
-      const response = await post(
+      const response = await fetch(
         `${BACKEND_BASE_URL}/DeleteCustomer?id=${customerToDeleteId}`,
         {
           method: "DELETE",
@@ -75,7 +92,6 @@ export default function CustomerOption1() {
     } finally {
       setShowConfirmModal(false);
       setCustomerToDeleteId(null);
-      setTimeout(() => setSuccessMessage(""), 3000);
     }
   };
 
@@ -86,18 +102,30 @@ export default function CustomerOption1() {
 
   const filtered = user.filter((customer) => {
     const q = query.trim().toLowerCase();
-    if (!q) return true;
-    return (
-      customer.Customer_Name.toLowerCase().includes(q) ||
-      customer.Customer_Email.toLowerCase().includes(q) ||
-      customer.Customer_Phone.toLowerCase().includes(q)
-    );
+    const matchesQuery =
+      customer.Customer_Name?.toLowerCase().includes(q) ||
+      customer.Customer_Email?.toLowerCase().includes(q) ||
+      customer.Customer_Phone?.toLowerCase().includes(q) ||
+      customer.GeneratedStoreID?.toString().includes(q) ||
+      customer.CustomerID?.toString().includes(q);
+
+    const customerDate = customer.Customer_Date
+      ? new Date(customer.Customer_Date)
+      : null;
+    const start = dateRange.startDate ? new Date(dateRange.startDate) : null;
+    const end = dateRange.endDate ? new Date(dateRange.endDate) : null;
+
+    const matchesDate =
+      !start ||
+      (customerDate && customerDate >= start && (!end || customerDate <= end));
+
+    return matchesQuery && matchesDate;
   });
 
-  // Reset to page 1 whenever search query changes
+  // Reset to page 1 whenever search query or filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [query]);
+  }, [query, dateRange]);
 
   // Pagination logic
   const totalPages = Math.ceil(filtered.length / customersPerPage);
@@ -125,34 +153,62 @@ export default function CustomerOption1() {
           </p>
         </div>
 
-        {/* Controls */}
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mb-6">
-          <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
-            <div className="relative flex-1">
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search customers..."
-                className="w-full border border-gray-300 rounded-lg px-4 py-2 pl-10 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-              />
-              <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setLoading(true)}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
-              >
-                <FaSpinner className={`${loading ? "animate-spin" : ""}`} />
-                Refresh
-              </button>
-              {/* <Link
-                href={"/admin/customers/customerForm"}
-                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
-              >
-                <FaPlus />
-                Add Customer
-              </Link> */}
-            </div>
+        {/* Controls and Filters */}
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
+          {/* Search Input */}
+          <div className="relative flex-1 w-full lg:w-auto">
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search customers..."
+              className="w-full border border-gray-300 rounded-lg px-4 py-2 pl-10 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+            />
+            <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+          </div>
+
+          {/* Date Filters */}
+          <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
+            <span className="text-gray-600 hidden md:block">
+              <FaCalendarAlt className="inline mr-2" />
+              Filter by Date:
+            </span>
+            <input
+              type="date"
+              value={dateRange.startDate}
+              onChange={(e) =>
+                setDateRange({ ...dateRange, startDate: e.target.value })
+              }
+              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500"
+              title="Start Date"
+            />
+            <span className="text-gray-500">to</span>
+            <input
+              type="date"
+              value={dateRange.endDate}
+              onChange={(e) =>
+                setDateRange({ ...dateRange, endDate: e.target.value })
+              }
+              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500"
+              title="End Date"
+            />
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex gap-2 w-full lg:w-auto">
+            <button
+              onClick={handleRefresh}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex-1 sm:flex-none flex items-center justify-center gap-2 transition-colors"
+            >
+              <FaSyncAlt className={`${loading ? "animate-spin" : ""}`} />
+              Refresh
+            </button>
+            <Link
+              href={"/admin/customers/customerForm"}
+              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex-1 sm:flex-none flex items-center justify-center gap-2 transition-colors"
+            >
+              <FaPlus />
+              Add Customer
+            </Link>
           </div>
         </div>
 
@@ -186,7 +242,13 @@ export default function CustomerOption1() {
                     <thead>
                       <tr className="text-left text-xs uppercase tracking-wide text-gray-600">
                         <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
-                          Name
+                          Customer ID
+                        </th>
+                        <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
+                          Store ID
+                        </th>
+                        <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
+                          Customer Name
                         </th>
                         <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
                           Email
@@ -195,7 +257,13 @@ export default function CustomerOption1() {
                           Phone
                         </th>
                         <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
-                          Status
+                          Service
+                        </th>
+                        <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
+                          Amount
+                        </th>
+                        <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
+                          Date & Time
                         </th>
                         <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
                           Actions
@@ -209,6 +277,8 @@ export default function CustomerOption1() {
                             key={item.CustomerID}
                             className="hover:bg-gray-50 text-sm sm:text-[15px] border-t"
                           >
+                            <td className="p-3">{item.CustomerID}</td>
+                            <td className="p-3">{item.GeneratedStoreID}</td>
                             <td className="p-3">{item.Customer_Name}</td>
                             <td className="p-3">{item.Customer_Email}</td>
                             <td className="p-3">{item.Customer_Phone}</td>
@@ -220,31 +290,69 @@ export default function CustomerOption1() {
                                     : "bg-red-100 text-red-800"
                                 }`}
                               >
-                                {item.Customer_Status || "Active"}
+                                {item.service_name}
                               </span>
+                            </td>
+                            <td className="p-3">
+                              {item.Customer_ProductAmount}
+                            </td>
+                            <td className="p-3">
+                              {(() => {
+                                const dateStr = item.Customer_Date;
+                                if (!dateStr) return "N/A";
+                                const date = new Date(dateStr);
+                                const formattedDate = date.toLocaleDateString(
+                                  "en-US",
+                                  {
+                                    weekday: "short",
+                                    day: "2-digit",
+                                    month: "short",
+                                    year: "numeric",
+                                  }
+                                );
+                                const formattedTime = date.toLocaleTimeString(
+                                  "en-US",
+                                  {
+                                    hour: "numeric",
+                                    minute: "2-digit",
+                                    hour12: true,
+                                  }
+                                );
+                                return (
+                                  <div className="flex flex-col">
+                                    <span>{formattedDate}</span>
+                                    <span className="text-gray-500">
+                                      {formattedTime}
+                                    </span>
+                                  </div>
+                                );
+                              })()}
                             </td>
                             <td className="p-3">
                               <div className="flex flex-wrap gap-2">
                                 <button
                                   onClick={() => handleView(item.CustomerID)}
-                                  className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm transition-colors"
+                                  className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm transition-colors flex items-center gap-1"
                                 >
+                                  <FaEye />
                                   View
                                 </button>
                                 <button
                                   onClick={() =>
                                     updateCustomer(item.CustomerID)
                                   }
-                                  className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-sm transition-colors"
+                                  className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-sm transition-colors flex items-center gap-1"
                                 >
+                                  <FaEdit />
                                   Edit
                                 </button>
                                 <button
                                   onClick={() =>
                                     handleDeleteInitiate(item.CustomerID)
                                   }
-                                  className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm transition-colors"
+                                  className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm transition-colors flex items-center gap-1"
                                 >
+                                  <FaTrashAlt />
                                   Delete
                                 </button>
                               </div>
@@ -254,7 +362,7 @@ export default function CustomerOption1() {
                       ) : (
                         <tr>
                           <td
-                            colSpan={5}
+                            colSpan={9}
                             className="p-8 text-center text-gray-500 border-t"
                           >
                             <div className="flex flex-col items-center gap-2">
@@ -334,7 +442,18 @@ export default function CustomerOption1() {
           </div>
         </div>
       )}
-      <ToastContainer />
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
     </div>
   );
 }

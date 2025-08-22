@@ -9,6 +9,8 @@ import {
   FaPlus,
   FaSpinner,
   FaArrowLeft,
+  FaCalendar,
+  FaTimesCircle,
 } from "react-icons/fa";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -20,8 +22,11 @@ const AllCustomers = () => {
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [query, setQuery] = useState("");
+  const [dateFilter, setDateFilter] = useState("all"); // 'all', 'today', 'last10days', 'custom'
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const customersPerPage = 10; // 👈 Change this number for page size
+  const customersPerPage = 10;
   const router = useRouter();
 
   const allCustomers = async () => {
@@ -43,35 +48,57 @@ const AllCustomers = () => {
     allCustomers();
   }, []);
 
-  // 🔎 Search filter
+  // 🔎 Advanced Search and Date Filter
   const filtered = customers.filter((customer) => {
     const q = query.trim().toLowerCase();
-    if (!q) return true;
+    const customerDate = new Date(customer.Customer_Date);
 
-    return (
-      String(customer.Customer_Name || "")
-        .toLowerCase()
-        .includes(q) ||
-      String(customer.Customer_Email || "")
-        .toLowerCase()
-        .includes(q) ||
-      String(customer.Customer_Phone || "")
-        .toLowerCase()
-        .includes(q) ||
-      String(customer.service_name || "")
-        .toLowerCase()
-        .includes(q)
-    );
+    // --- Date filtering logic ---
+    let dateMatch = true;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (dateFilter === "today") {
+      const customerDay = new Date(customerDate);
+      customerDay.setHours(0, 0, 0, 0);
+      dateMatch = customerDay.getTime() === today.getTime();
+    } else if (dateFilter === "last10days") {
+      const tenDaysAgo = new Date();
+      tenDaysAgo.setDate(today.getDate() - 10);
+      dateMatch = customerDate >= tenDaysAgo && customerDate <= today;
+    } else if (dateFilter === "custom") {
+      if (startDate && endDate) {
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999); // Include the whole end day
+        dateMatch = customerDate >= start && customerDate <= end;
+      } else {
+        dateMatch = false; // No range selected, so no match
+      }
+    }
+
+    // --- Text search logic (Updated to include all columns) ---
+    const textMatch =
+      !q ||
+      Object.values(customer).some((value) =>
+        String(value).toLowerCase().includes(q)
+      );
+
+    return dateMatch && textMatch;
   });
 
   // Export to Excel function
   const exportToExcel = () => {
     const dataToExport = filtered.map((customer) => ({
       "Customer ID": customer.CustomerID,
-      Name: customer.Customer_Name,
+      "Store ID": customer.GeneratedStoreID,
+      "Store Name": customer.StoreName,
+      "Customer Name": customer.Customer_Name,
       Email: customer.Customer_Email,
       Phone: customer.Customer_Phone,
       Service: customer.service_name,
+      Amount: customer.Customer_ProductAmount,
+      "Date & Time": new Date(customer.Customer_Date).toLocaleString(),
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);
@@ -85,13 +112,28 @@ const AllCustomers = () => {
     const doc = new jsPDF();
     doc.text("All Customers List", 14, 20);
 
-    const tableColumn = ["ID", "Name", "Email", "Phone", "Service"];
+    const tableColumn = [
+      "Customer ID",
+      "Store ID",
+      "Store Name",
+      "Customer Name",
+      "Email",
+      "Phone",
+      "Service",
+      "Amount",
+      "Date & Time",
+    ];
     const tableRows = filtered.map((customer) => [
       customer.CustomerID,
+      customer.GeneratedStoreID,
+      customer.StoreName,
       customer.Customer_Name,
       customer.Customer_Email,
       customer.Customer_Phone,
       customer.service_name,
+      customer.Customer_ProductAmount,
+      customer.StoreName,
+      new Date(customer.Customer_Date).toLocaleString(),
     ]);
 
     autoTable(doc, {
@@ -130,70 +172,166 @@ const AllCustomers = () => {
     }
   };
 
+  // Function to handle filter changes and reset page
+  const handleFilterChange = (filter) => {
+    setDateFilter(filter);
+    setCurrentPage(1); // Reset to page 1 on filter change
+  };
+
+  // 🔄 New function to reset all filters
+  const handleResetFilters = () => {
+    setQuery("");
+    setDateFilter("all");
+    setStartDate("");
+    setEndDate("");
+    setCurrentPage(1);
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-2">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-8">
       <button
         onClick={() => router.back()}
-        className="flex items-center gap-2 text-indigo-600 hover:text-indigo-700 transition-colors"
+        className="mb-6 flex items-center gap-2 text-indigo-600 hover:text-indigo-700 transition-colors"
       >
         <FaArrowLeft />
         Back
       </button>
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-8 text-center md:text-left">
           <h1 className="text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
             All Customers
           </h1>
           <p className="text-gray-600 mt-2 text-lg">
-            Manage and view all registered customers
+            Manage and view all registered customers with powerful search and
+            filter options.
           </p>
         </div>
 
-        {/* Controls */}
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mb-6">
-          <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
-            <div className="relative flex-1">
+        {/* Control and Filter Section */}
+        <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-center">
+            {/* Search Input */}
+            <div className="relative md:col-span-2 lg:col-span-4">
               <input
                 value={query}
                 onChange={(e) => {
                   setQuery(e.target.value);
-                  setCurrentPage(1); // reset to page 1 on search
+                  setCurrentPage(1);
                 }}
-                placeholder="Search customers..."
-                className="w-full border border-gray-300 rounded-lg px-4 py-2 pl-10 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                placeholder="Search by any field (ID, Name, Email, Phone...)"
+                className="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300"
               />
               <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             </div>
-            <div className="flex gap-2">
+
+            {/* Date Filter Buttons */}
+            <div className="md:col-span-2 lg:col-span-2 flex flex-wrap gap-2 overflow-x-auto pb-2">
+              <span className="flex items-center text-gray-600 font-medium">
+                <FaCalendar className="mr-2" /> Date Filter:
+              </span>
               <button
-                onClick={allCustomers}
-                disabled={loading}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors disabled:opacity-50"
+                onClick={() => handleFilterChange("all")}
+                className={`flex-shrink-0 px-4 py-2 rounded-lg transition-colors ${
+                  dateFilter === "all"
+                    ? "bg-indigo-600 text-white shadow-md"
+                    : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                }`}
               >
-                <FaSpinner className={`${loading ? "animate-spin" : ""}`} />
-                Refresh
+                All
               </button>
-              <Link
-                href={"/admin/customers/customerForm"}
-                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+              <button
+                onClick={() => handleFilterChange("today")}
+                className={`flex-shrink-0 px-4 py-2 rounded-lg transition-colors ${
+                  dateFilter === "today"
+                    ? "bg-indigo-600 text-white shadow-md"
+                    : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                }`}
               >
-                <FaPlus />
-                Add Customer
-              </Link>
+                Today
+              </button>
+              <button
+                onClick={() => handleFilterChange("last10days")}
+                className={`flex-shrink-0 px-4 py-2 rounded-lg transition-colors ${
+                  dateFilter === "last10days"
+                    ? "bg-indigo-600 text-white shadow-md"
+                    : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                }`}
+              >
+                Last 10 Days
+              </button>
+              <button
+                onClick={() => handleFilterChange("custom")}
+                className={`flex-shrink-0 px-4 py-2 rounded-lg transition-colors ${
+                  dateFilter === "custom"
+                    ? "bg-indigo-600 text-white shadow-md"
+                    : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                }`}
+              >
+                Custom Range
+              </button>
             </div>
+
+            {/* Custom Date Range Inputs (conditionally rendered) */}
+            {dateFilter === "custom" && (
+              <div className="flex flex-col sm:flex-row gap-4 lg:col-span-2 transition-all duration-300 ease-in-out">
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => {
+                    setStartDate(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="flex-1 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  placeholder="Start Date"
+                />
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => {
+                    setEndDate(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="flex-1 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  placeholder="End Date"
+                />
+              </div>
+            )}
           </div>
-          {/* New Export Buttons */}
-          <div className="flex justify-end gap-2 w-full lg:w-auto mt-4 lg:mt-0">
+
+          {/* Action buttons */}
+          <div className="flex flex-wrap justify-end gap-2 w-full mt-4 border-t pt-4">
+            <button
+              onClick={handleResetFilters}
+              className="flex-1 lg:flex-none bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2 transition-colors"
+            >
+              <FaTimesCircle />
+              Reset Filters
+            </button>
+            <button
+              onClick={allCustomers}
+              disabled={loading}
+              className="flex-1 lg:flex-none bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+            >
+              <FaSpinner className={`${loading ? "animate-spin" : ""}`} />
+              Refresh
+            </button>
+            <Link
+              href={"/admin/customers/customerForm"}
+              className="flex-1 lg:flex-none bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2 transition-colors"
+            >
+              <FaPlus />
+              Add Customer
+            </Link>
             <button
               onClick={exportToPDF}
-              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors"
+              className="flex-1 lg:flex-none bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors"
             >
               Download PDF
             </button>
             <button
               onClick={exportToExcel}
-              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors"
+              className="flex-1 lg:flex-none bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors"
             >
               Export to Excel
             </button>
@@ -224,7 +362,13 @@ const AllCustomers = () => {
                           Customer ID
                         </th>
                         <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
-                          Name
+                          Store ID
+                        </th>
+                        <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
+                          Store Name
+                        </th>
+                        <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
+                          Customer Name
                         </th>
                         <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
                           Email
@@ -233,7 +377,13 @@ const AllCustomers = () => {
                           Phone
                         </th>
                         <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
+                          Date & Time
+                        </th>
+                        <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
                           Service
+                        </th>
+                        <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
+                          Amount
                         </th>
                       </tr>
                     </thead>
@@ -245,16 +395,55 @@ const AllCustomers = () => {
                             className="hover:bg-gray-50 text-sm sm:text-[15px] border-t"
                           >
                             <td className="p-3">{customer.CustomerID}</td>
+                            <td className="p-3">{customer.GeneratedStoreID}</td>
+                            <td className="p-3">{customer.StoreName}</td>
                             <td className="p-3">{customer.Customer_Name}</td>
                             <td className="p-3">{customer.Customer_Email}</td>
                             <td className="p-3">{customer.Customer_Phone}</td>
+                            <td className="p-3">
+                              {(() => {
+                                const dateStr = customer.Customer_Date;
+                                if (!dateStr) return "N/A";
+
+                                const date = new Date(dateStr);
+                                const formattedDate = date.toLocaleDateString(
+                                  "en-US",
+                                  {
+                                    weekday: "short",
+                                    day: "2-digit",
+                                    month: "short",
+                                    year: "numeric",
+                                  }
+                                );
+                                const formattedTime = date.toLocaleTimeString(
+                                  "en-US",
+                                  {
+                                    hour: "numeric",
+                                    minute: "2-digit",
+                                    hour12: true,
+                                  }
+                                );
+
+                                return (
+                                  <div className="flex flex-col">
+                                    <span>{formattedDate}</span>
+                                    <span className="text-gray-500">
+                                      {formattedTime}
+                                    </span>
+                                  </div>
+                                );
+                              })()}
+                            </td>
                             <td className="p-3">{customer.service_name}</td>
+                            <td className="p-3">
+                              {customer.Customer_ProductAmount}
+                            </td>
                           </tr>
                         ))
                       ) : (
                         <tr>
                           <td
-                            colSpan={5}
+                            colSpan={8}
                             className="p-8 text-center text-gray-500 border-t"
                           >
                             <div className="flex flex-col items-center gap-2">
@@ -305,7 +494,18 @@ const AllCustomers = () => {
           </div>
         </div>
       </div>
-      <ToastContainer />
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
     </div>
   );
 };

@@ -12,6 +12,8 @@ import {
   FaFileAlt,
   FaStopCircle,
   FaUserSecret,
+  FaDollarSign,
+  FaCalendar,
 } from "react-icons/fa";
 
 const StoreDetailsPage = () => {
@@ -169,7 +171,7 @@ const StoreDetailsPage = () => {
               {renderDataField(
                 "Created At",
                 new Date(storeData.CreatedAt).toLocaleDateString(),
-                <FaFileAlt />
+                <FaCalendar/>
               )}
               {renderDataField(
                 "Generated Store ID",
@@ -195,6 +197,7 @@ const StoreDetailsPage = () => {
                 <FaMapMarkerAlt />
               )}
               {renderDataField("City", storeData.CityName, <FaMapMarkerAlt />)}
+              {renderDataField("Total Sales", storeData.SalesByStore, <FaDollarSign />)}
               {renderDataField(
                 "PAN Number",
                 storeData.PANNumber,

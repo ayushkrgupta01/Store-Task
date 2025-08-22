@@ -2,7 +2,7 @@
 
 import { useParams, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { FaArrowLeft, FaUser, FaEnvelope, FaPhone, FaFileAlt, FaMapMarkerAlt, FaLink, FaCalendarAlt } from 'react-icons/fa';
+import { FaArrowLeft, FaUser, FaEnvelope, FaPhone, FaFileAlt, FaMapMarkerAlt, FaLink, FaCalendarAlt, FaIdCard, FaStore, FaIdBadge } from 'react-icons/fa';
 
 export default function CustomerDetails() {
   const { id } = useParams();
@@ -118,11 +118,12 @@ export default function CustomerDetails() {
           {/* Details Grid */}
           <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
-              {renderDataField('Name', user.Customer_Name, <FaUser />)}
+              {renderDataField('Customer ID', user.CustomerID, <FaIdCard />)}
+              {renderDataField('Store ID', user.StoreID, <FaIdBadge />)}
+              {renderDataField('Customer Name', user.Customer_Name, <FaUser />)}
+              {renderDataField('Store Name', user.StoreName, <FaStore />)}
               {renderDataField('Email', user.Customer_Email, <FaEnvelope />)}
               {renderDataField('Phone', user.Customer_Phone, <FaPhone />)}
-              {renderDataField('Service', user.service_name, <FaFileAlt />)}
-              {renderDataField('Store ID', user.StoreID, <FaFileAlt />)}
             </div>
 
             <div className="space-y-4">
@@ -130,6 +131,8 @@ export default function CustomerDetails() {
               {renderDataField('PAN Number', user.Customer_PanNumber, <FaFileAlt />)}
               {renderDataField('Product Amount', `₹${user.Customer_ProductAmount}`, <FaFileAlt />)}
               {renderDataField('Date', new Date(user.Customer_Date).toLocaleDateString(), <FaCalendarAlt />)}
+              {renderDataField('Service', user.service_name, <FaFileAlt />)}
+              {renderDataField('Store ID', user.Generated, <FaFileAlt />)}
             </div>
           </div>
 

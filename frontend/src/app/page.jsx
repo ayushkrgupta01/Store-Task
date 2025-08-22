@@ -118,7 +118,7 @@ const AdminLoginForm = () => {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center h-16">
               <div className="flex items-center">
-                <img src="/LogoLight.jpeg" alt="Logo" className="h-10 w-10 rounded-full" />
+                <img src="/LogoLight.jpeg" alt="Logo" className="my-auto rounded-full size-16" />
                 <span className="ml-3 text-xl font-bold text-gray-800">Store Management System</span>
               </div>
               <div className="text-sm font-bold text-gray-600">
@@ -241,7 +241,7 @@ const AdminLoginForm = () => {
                 {/* Footer */}
                 <div className="mt-8 text-center">
                   <p className="text-sm text-gray-500">
-                    Secure admin access portal
+                    Copyright © 2025 Micron Conclusion Services Pvt. Ltd. All Rights Reserved.
                   </p>
                 </div>
               </div>

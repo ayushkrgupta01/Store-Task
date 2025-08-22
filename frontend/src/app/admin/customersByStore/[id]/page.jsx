@@ -161,13 +161,27 @@ const CustomersByStore = () => {
     const doc = new jsPDF();
     doc.text(`Customers for ${storeName} Store`, 14, 20);
 
-    const tableColumn = ["ID", "Name", "Email", "Phone", "Service"];
+    const tableColumn = [
+      "Customer ID",
+      "Store ID",
+      "Store Name",
+      "Customer Name",
+      "Email",
+      "Phone",
+      "Date & Time",
+      "Service",
+      "Amount",
+    ];
     const tableRows = filteredCustomers.map((customer) => [
       customer.CustomerID,
+      customer.StoreID,
+      customer.StoreName,
       customer.Customer_Name,
       customer.Customer_Email,
       customer.Customer_phone,
+      customer.Customer_Date,
       customer.service_name,
+      customer.Customer_productamount,
     ]);
 
     autoTable(doc, {
@@ -285,11 +299,15 @@ const CustomersByStore = () => {
                   <table className="w-full border-collapse">
                     <thead>
                       <tr className="text-left text-xs uppercase tracking-wide text-gray-600">
-                        <th className="p-3 bg-gray-50">ID</th>
-                        <th className="p-3 bg-gray-50">Name</th>
+                        <th className="p-3 bg-gray-50">Customer ID</th>
+                        <th className="p-3 bg-gray-50">Store ID</th>
+                        <th className="p-3 bg-gray-50">Store Name</th>
+                        <th className="p-3 bg-gray-50">Customer Name</th>
                         <th className="p-3 bg-gray-50">Email</th>
                         <th className="p-3 bg-gray-50">Phone</th>
+                        <th className="p-3 bg-gray-50">Date & Time</th>
                         <th className="p-3 bg-gray-50">Service</th>
+                        <th className="p-3 bg-gray-50">Amount</th>
                         <th className="p-3 bg-gray-50 text-center">Actions</th>
                       </tr>
                     </thead>
@@ -301,10 +319,16 @@ const CustomersByStore = () => {
                             className="hover:bg-gray-50 text-sm border-t"
                           >
                             <td className="p-3">{customer.CustomerID}</td>
+                            <td className="p-3">{customer.StoreID}</td>
+                            <td className="p-3">{customer.StoreName}</td>
                             <td className="p-3">{customer.Customer_Name}</td>
                             <td className="p-3">{customer.Customer_Email}</td>
                             <td className="p-3">{customer.Customer_phone}</td>
+                            <td className="p-3">{customer.Customer_Date}</td>
                             <td className="p-3">{customer.service_name}</td>
+                            <td className="p-3">
+                              {customer.Customer_productamount}
+                            </td>
                             <td className="p-3 text-center">
                               <div className="flex flex-wrap gap-2 justify-center">
                                 <button
@@ -416,7 +440,18 @@ const CustomersByStore = () => {
           </div>
         </div>
       )}
-      <ToastContainer />
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
     </div>
   );
 };
