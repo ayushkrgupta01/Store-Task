@@ -18,7 +18,7 @@ const AllCustomers = () => {
   const [loading, setLoading] = useState(false);
   const [query, setQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const customersPerPage = 5; // 👈 Change this number for page size
+  const customersPerPage = 10; // 👈 Change this number for page size
   const router = useRouter();
 
   const allCustomers = async () => {

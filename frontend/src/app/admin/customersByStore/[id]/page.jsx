@@ -29,7 +29,7 @@ const CustomersByStore = () => {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [customerToDeleteId, setCustomerToDeleteId] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const customersPerPage = 5;
+  const customersPerPage = 10;
 
   // 🔹 Fetch customers for the store
   const fetchCustomers = async (storeId) => {

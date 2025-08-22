@@ -171,7 +171,7 @@ function UpdateCustomer() {
       };
 
       // 3. Send the PUT request to the correct endpoint.
-      const response = await axios.put(
+      const response = await axios.post(
         `${BACKEND_BASE_URL}/CustumerUpdate`,
         payload
       );

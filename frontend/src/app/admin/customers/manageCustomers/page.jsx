@@ -21,7 +21,7 @@ export default function CustomerOption1() {
   const [customerToDeleteId, setCustomerToDeleteId] = useState(null);
   const [successMessage, setSuccessMessage] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const customersPerPage = 5; // adjust page size here
+  const customersPerPage = 10; // adjust page size here
   const router = useRouter();
 
   const BACKEND_BASE_URL = process.env.NEXT_PUBLIC_SERVICES_URL;
@@ -57,7 +57,7 @@ export default function CustomerOption1() {
     if (customerToDeleteId === null) return;
 
     try {
-      const response = await fetch(
+      const response = await post(
         `${BACKEND_BASE_URL}/DeleteCustomer?id=${customerToDeleteId}`,
         {
           method: "DELETE",

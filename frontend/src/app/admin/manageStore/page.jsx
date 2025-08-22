@@ -27,7 +27,7 @@ const ManageStores = () => {
   const [showDeletePopup, setShowDeletePopup] = useState(false);
   const [selectedStore, setSelectedStore] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const customersPerPage = 2; // 👈 Change this number for page size
+  const customersPerPage = 10; // 👈 Change this number for page size
 
   const fetchStores = async () => {
     setLoading(true);
