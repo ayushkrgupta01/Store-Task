@@ -228,7 +228,7 @@ const StoreDetails = () => {
                             Store ID:
                           </span>
                           <span className="text-sm font-mono text-gray-700">
-                            {store.StoreID || "N/A"}
+                            {store.GeneratedStoreID || "N/A"}
                           </span>
                         </div>
                       </div>
