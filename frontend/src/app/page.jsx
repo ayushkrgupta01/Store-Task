@@ -134,9 +134,9 @@ const AdminLoginForm = () => {
             {/* Left Side - Login Form */}
             <div className="max-w-md w-full mx-auto">
               {/* Card Container */}
-              <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-2xl p-8 border border-white/20">
+              <div className="bg-white/80 z-5 backdrop-blur-sm rounded-2xl shadow-2xl p-8 border border-white/20">
                 {/* Logo and Header */}
-                <div className="text-center mb-8">
+                <div className="text-center mb-8 z-10">
                   <div className="relative mb-6">
                     <img 
                       src="/LogoLight.jpeg" 
