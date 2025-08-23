@@ -151,14 +151,14 @@ const Sidebar = ({ onNavigate = () => {} }) => {
                       Customer Dashboard
                     </Link>
                   </li>
-                  <li>
+                  {/* <li>
                     <Link
                       href="/admin/customers/allCustomers"
                       className="flex items-center p-2 pl-11 w-full text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
                     >
                       All Customers
                     </Link>
-                  </li>
+                  </li> */}
                   <li>
                     <Link
                       href="/admin/customers/manageCustomers"

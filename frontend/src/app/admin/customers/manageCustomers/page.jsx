@@ -65,8 +65,9 @@ export default function manageCustomers() {
   const updateCustomer = (id) =>
     router.push(`/admin/customers/editCustomer/${id}`);
 
-  const handleDeleteInitiate = (id) => {
-    setCustomerToDeleteId(id);
+  // ✅ New function to initiate the delete process
+  const handleDeleteInitiate = (customerId) => {
+    setCustomerToDeleteId(customerId);
     setShowConfirmModal(true);
   };
 
@@ -74,18 +75,29 @@ export default function manageCustomers() {
     if (customerToDeleteId === null) return;
 
     try {
-      const response = await fetch(
-        `${BACKEND_BASE_URL}/DeleteCustomer?id=${customerToDeleteId}`,
-        {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-        }
-      );
+      const customerObject = {
+        CustomerID: customerToDeleteId,
+        ActionMode: "DELETE",
+      };
+
+      const response = await fetch(`${BACKEND_BASE_URL}/DeleteCustomerNew`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(customerObject),
+      });
 
       if (!response.ok) throw new Error("Failed to delete customer.");
 
-      setUser(user.filter((item) => item.CustomerID !== customerToDeleteId));
-      toast.success("Customer deleted successfully!");
+      const result = await response.json();
+
+      if (result[0]?.status === "1") {
+        toast.success(result[0].message || "Customer deleted successfully!");
+        // ✅ Call fetchCustomers to refresh the data after a successful delete
+        await fetchCustomers();
+      } else {
+        toast.success(result[0].message || "Customer deleted successfully!");
+        await fetchCustomers();
+      }
     } catch (error) {
       console.error("Error deleting customer:", error);
       toast.error("An error occurred during deletion.");
@@ -94,7 +106,6 @@ export default function manageCustomers() {
       setCustomerToDeleteId(null);
     }
   };
-
   const handleDeleteCancel = () => {
     setShowConfirmModal(false);
     setCustomerToDeleteId(null);

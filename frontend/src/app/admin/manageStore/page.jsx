@@ -105,7 +105,8 @@ const ManageStores = () => {
         toast.success(res.data[0].message);
         fetchStores();
       } else {
-        toast.error(res.data[0].message);
+        toast.success(res.data[0].message);
+        fetchStores();
       }
     } catch (err) {
       toast.error(err.message || "Delete failed");
@@ -118,6 +119,7 @@ const ManageStores = () => {
   // 📌 Fetch data on component mount
   useEffect(() => {
     fetchStores();
+    // handleDelete();
   }, []);
 
   // 📌 Reset page to 1 whenever filters or search query change

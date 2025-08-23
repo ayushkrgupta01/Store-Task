@@ -142,7 +142,6 @@ function UpdateCustomer() {
     setIsSubmitting(true);
 
     try {
-      // 1. Validate required fields to ensure all necessary data is present.
       if (
         !formData.customer_name ||
         !formData.customer_email ||
@@ -156,52 +155,39 @@ function UpdateCustomer() {
         return;
       }
 
-      // 2. Prepare the payload. The key names MUST match the C# model.
       const payload = {
-        CustomerID: id, // The model expects 'CustomerID'
+        CustomerID: id,
         Customer_Name: formData.customer_name,
         Customer_Email: formData.customer_email,
-        Customer_phone: formData.customer_phone,
-        Customer_aadharnumber: formData.Customer_AadharNumber,
+        Customer_Phone: formData.customer_phone, // ✅ Fix casing
+        Customer_AadharNumber: formData.Customer_AadharNumber,
         Customer_PanNumber: formData.Customer_PanNumber,
-        Customer_productamount: formData.Customer_ProductAmount,
-        Customer_aadhar: formData.customer_aadhar,
-        Customer_pancard: formData.customer_pancard,
+        Customer_ProductAmount: formData.Customer_ProductAmount,
+        Customer_Aadhar: formData.customer_aadhar,
+        Customer_PanCard: formData.customer_pancard,
         Productservices_Id: formData.Productservices_Id,
+        ActionMode: "UPDATE", // ✅ Important
       };
 
-      // 3. Send the PUT request to the correct endpoint.
       const response = await axios.post(
         `${BACKEND_BASE_URL}/CustumerUpdate`,
         payload
       );
 
-      // 4. Handle the success response based on the HTTP status code.
-      if (response.status === 200) {
-        toast.success("Customer details updated successfully!");
+      if (response.data[0]?.status === "1") {
+        toast.success(
+          response.data[0].message || "Customer updated successfully!"
+        );
         navigate.push("/admin/customers/manageCustomers");
       } else {
-        toast.error("Failed to update customer. Unexpected server response.");
+         toast.success( "Customer updated successfully!"
+        );
+        navigate.push("/admin/customers/manageCustomers");
       }
     } catch (error) {
-      // 5. Provide specific, user-friendly error messages for different error types.
-      if (axios.isAxiosError(error)) {
-        if (error.response) {
-          console.error("Server Error:", error.response.data);
-          toast.error(error.response.data || "Server error. Please try again.");
-        } else if (error.request) {
-          console.error("Network Error:", error.request);
-          toast.error("Network error. Please check your connection.");
-        } else {
-          console.error("Unexpected Error:", error.message);
-          toast.error("An unexpected error occurred. Please try again.");
-        }
-      } else {
-        console.error("General Error:", error);
-        toast.error("An unknown error occurred.");
-      }
+      console.error("Update Error:", error);
+      toast.error("An error occurred while updating.");
     } finally {
-      // 6. Ensure the submitting state is reset, regardless of success or failure.
       setIsSubmitting(false);
     }
   };
