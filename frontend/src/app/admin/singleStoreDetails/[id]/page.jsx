@@ -216,7 +216,7 @@ const StoreDetailsPage = () => {
                     PAN Attachment:
                   </span>
                   <a
-                    href={`${NEXT_PUBLIC_IMAGE_BASE_URL}/${storeData.PANNumberAttachment}`}
+                    href={`${process.env.NEXT_PUBLIC_IMAGE_BASE_URL}/${storeData.PANNumberAttachment}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-indigo-600 hover:underline font-medium"
@@ -232,7 +232,7 @@ const StoreDetailsPage = () => {
                     Aadhar Attachment:
                   </span>
                   <a
-                    href={`${NEXT_PUBLIC_IMAGE_BASE_URL}/${storeData.AadharNumberAttachment}`}
+                    href={`${process.env.NEXT_PUBLIC_IMAGE_BASE_URL}/${storeData.AadharNumberAttachment}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-indigo-600 hover:underline font-medium"

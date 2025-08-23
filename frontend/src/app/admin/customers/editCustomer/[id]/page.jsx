@@ -376,7 +376,7 @@ function UpdateCustomer() {
                   {formData.customer_aadhar && (
                     <div className="relative mt-4 w-full h-32 md:h-48">
                       <Image
-                        src={`${NEXT_PUBLIC_IMAGE_BASE_URL}/${formData.customer_aadhar}`}
+                        src={`${process.env.NEXT_PUBLIC_IMAGE_BASE_URL}/${formData.customer_aadhar}`}
                         alt="Aadhar preview"
                         layout="fill"
                         objectFit="contain"
@@ -426,7 +426,7 @@ function UpdateCustomer() {
                   {formData.customer_pancard && (
                     <div className="relative mt-4 w-full h-32 md:h-48">
                       <Image
-                        src={`${NEXT_PUBLIC_IMAGE_BASE_URL}/${formData.customer_pancard}`}
+                        src={`${process.env.NEXT_PUBLIC_IMAGE_BASE_URL}/${formData.customer_pancard}`}
                         alt="PAN preview"
                         layout="fill"
                         objectFit="contain"

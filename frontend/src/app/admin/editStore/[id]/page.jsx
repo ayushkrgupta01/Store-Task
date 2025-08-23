@@ -624,7 +624,7 @@ const EditStore = () => {
                   {panPreviewUrl && (
                     <div className="relative mt-4">
                       <img
-                        src={panPreviewUrl}
+                        src={`${process.env.NEXT_PUBLIC_IMAGE_BASE_URL}/${formik.values.panNumberAttachment}`}
                         alt="PAN Card Preview"
                         className="w-full h-auto max-h-48 object-contain rounded-lg border border-gray-200 shadow-md"
                       />
@@ -714,7 +714,7 @@ const EditStore = () => {
                   {aadharPreviewUrl && (
                     <div className="relative mt-4">
                       <img
-                        src={aadharPreviewUrl}
+                        src={`${process.env.NEXT_PUBLIC_IMAGE_BASE_URL}/${formik.values.aadharNumberAttachment}`}
                         alt="Aadhar Card Preview"
                         className="w-full h-auto max-h-48 object-contain rounded-lg border border-gray-200 shadow-md"
                       />
