@@ -189,7 +189,7 @@ const AllStores = () => {
     doc.text("All Stores List", 14, 20);
 
     const tableColumn = [
-      "ID",
+      "Store ID",
       "Name",
       "Email",
       "Phone",
@@ -199,7 +199,7 @@ const AllStores = () => {
       "Aadhar",
     ];
     const tableRows = filtered.map((store) => [
-      getValue(store, ["StoreID"]),
+      getValue(store, ["GeneratedStoreID"]),
       getValue(store, ["StoreName"]),
       getValue(store, ["Email"]),
       getValue(store, ["Phone"]),
