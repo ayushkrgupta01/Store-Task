@@ -19,7 +19,7 @@ import {
 } from "react-icons/fa";
 
 const BACKEND_BASE_URL = process.env.NEXT_PUBLIC_SERVICES_URL;
-const NEXT_PUBLIC_IMAGE_PREVIEW = process.env.NEXT_PUBLIC_IMAGE_PREVIEW;
+const NEXT_PUBLIC_IMAGE_CUSTOMER = process.env.NEXT_PUBLIC_IMAGE_CUSTOMER;
 
 function UpdateCustomer() {
   const { id } = useParams();
@@ -77,7 +77,7 @@ function UpdateCustomer() {
     formDataPayload.append("uploadtype", uploadType);
 
     try {
-      const res = await axios.post(NEXT_PUBLIC_IMAGE_PREVIEW, formDataPayload);
+      const res = await axios.post(NEXT_PUBLIC_IMAGE_CUSTOMER, formDataPayload);
       if (res.data?.success && res.data?.fileName) {
         setFormData((prev) => ({ ...prev, [formKey]: res.data.fileName }));
         toast.success(`${uploadType} image uploaded successfully!`);
@@ -376,7 +376,7 @@ function UpdateCustomer() {
                   {formData.customer_aadhar && (
                     <div className="relative mt-4 w-full h-32 md:h-48">
                       <Image
-                        src={`${process.env.NEXT_PUBLIC_IMAGE_PREVIEW}/${formData.customer_aadhar}`}
+                        src={`${process.env.NEXT_PUBLIC_IMAGE_CUSTOMER}/${formData.customer_aadhar}`}
                         alt="Aadhar preview"
                         layout="fill"
                         objectFit="contain"
@@ -426,7 +426,7 @@ function UpdateCustomer() {
                   {formData.customer_pancard && (
                     <div className="relative mt-4 w-full h-32 md:h-48">
                       <Image
-                        src={`${process.env.NEXT_PUBLIC_IMAGE_PREVIEW}/${formData.customer_pancard}`}
+                        src={`${process.env.NEXT_PUBLIC_IMAGE_CUSTOMER}/${formData.customer_pancard}`}
                         alt="PAN preview"
                         layout="fill"
                         objectFit="contain"
