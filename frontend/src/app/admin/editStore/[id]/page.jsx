@@ -172,13 +172,13 @@ const EditStore = () => {
             if (s.PANNumberAttachment) {
               setPanFileName(s.PANNumberAttachment);
               setPanPreviewUrl(
-                `${process.env.NEXT_PUBLIC_IMAGE_BASE_URL}/${s.PANNumberAttachment}`
+                `${process.env.NEXT_PUBLIC_IMAGE_PREVIEW}/${s.PANNumberAttachment}`
               );
             }
             if (s.AadharNumberAttachment) {
               setAadharFileName(s.AadharNumberAttachment);
               setAadharPreviewUrl(
-                `${process.env.NEXT_PUBLIC_IMAGE_BASE_URL}/${s.AadharNumberAttachment}`
+                `${process.env.NEXT_PUBLIC_IMAGE_PREVIEW}/${s.AadharNumberAttachment}`
               );
             }
           }

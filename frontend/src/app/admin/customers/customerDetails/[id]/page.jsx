@@ -12,7 +12,7 @@ export default function CustomerDetails() {
   const [error, setError] = useState(null);
 
   // Base URL for images
-  const NEXT_PUBLIC_IMAGE_BASE_URL = process.env.NEXT_PUBLIC_IMAGE_BASE_URL;
+  const NEXT_PUBLIC_IMAGE_PREVIEW = process.env.NEXT_PUBLIC_IMAGE_PREVIEW;
 
   useEffect(() => {
     if (!id) return;
@@ -147,7 +147,7 @@ export default function CustomerDetails() {
                 <span className="font-semibold text-gray-600">Aadhar Card:</span>
                 {user.Customer_Aadhar ? (
                   <a
-                    href={`${process.env.NEXT_PUBLIC_IMAGE_BASE_URL}/${user.Customer_Aadhar}`}
+                    href={`${process.env.NEXT_PUBLIC_IMAGE_PREVIEW}/${user.Customer_Aadhar}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-2 text-indigo-600 hover:text-indigo-700 hover:underline font-medium transition"
@@ -164,7 +164,7 @@ export default function CustomerDetails() {
                 <span className="font-semibold text-gray-600">PAN Card:</span>
                 {user.Customer_PanCard ? (
                   <a
-                    href={`${process.env.NEXT_PUBLIC_IMAGE_BASE_URL}/${user.Customer_PanCard}`}
+                    href={`${process.env.NEXT_PUBLIC_IMAGE_PREVIEW}/${user.Customer_PanCard}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-2 text-indigo-600 hover:text-indigo-700 hover:underline font-medium transition"

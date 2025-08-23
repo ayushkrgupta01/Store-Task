@@ -37,7 +37,7 @@ const ImageAttachmentPreview = ({ label, attachmentUrl }) => {
     );
   }
 
-  const imageUrl = `${process.env.NEXT_PUBLIC_IMAGE_BASE_URL}/${attachmentUrl}`;
+  const imageUrl = `${process.env.NEXT_PUBLIC_IMAGE_PREVIEW}/${attachmentUrl}`;
 
   return (
     <div className="flex flex-col gap-2 p-4 bg-gray-50 rounded-lg border border-gray-100">
@@ -154,7 +154,7 @@ const StoreDetailsPage = () => {
 
   // Determine the image URL for the main store image
   const storeImage = storeData.StoreImageName
-    ? `${process.env.NEXT_PUBLIC_IMAGE_BASE_URL}/uploads/${storeData.StoreImageName}`
+    ? `${process.env.NEXT_PUBLIC_IMAGE_PREVIEW}/uploads/${storeData.StoreImageName}`
     : null;
 
   return (
