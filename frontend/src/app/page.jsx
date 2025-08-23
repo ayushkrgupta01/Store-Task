@@ -112,7 +112,7 @@ const AdminLoginForm = () => {
   return (
     <>
       <ToastContainer />
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
+      <div className="min-h-screen bg-gradient-to-br z-1 from-indigo-50 via-white to-purple-50">
         {/* Header */}
         <div className="bg-white/80 backdrop-blur-sm border-b border-white/20">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

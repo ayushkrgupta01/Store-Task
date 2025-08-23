@@ -132,7 +132,7 @@ export default function CustomerDetails() {
               {renderDataField('Product Amount', `₹${user.Customer_ProductAmount}`, <FaFileAlt />)}
               {renderDataField('Date', new Date(user.Customer_Date).toLocaleDateString(), <FaCalendarAlt />)}
               {renderDataField('Service', user.service_name, <FaFileAlt />)}
-              {renderDataField('Store ID', user.Generated, <FaFileAlt />)}
+              {renderDataField('Store ID', user.GeneratedStoreID, <FaFileAlt />)}
             </div>
           </div>
 
