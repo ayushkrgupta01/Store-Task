@@ -119,7 +119,7 @@ const AdminLoginForm = () => {
             <div className="flex justify-between items-center h-16">
               <div className="flex items-center">
                 <img src="/LogoLight.jpeg" alt="Logo" className="my-auto rounded-full size-16" />
-                <span className="ml-3 text-xl font-bold text-gray-800">Store Management System</span>
+                <span className="ml-3 text-sm md:text-xl font-sans font-bold text-gray-700">Store Management System</span>
               </div>
               <div className="text-sm font-bold text-gray-600">
                 Admin Portal
