@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useParams, useRouter } from "next/navigation";
-import Image from "next/image"; // ✅ Import the Image component for optimized image handling
+import Image from "next/image";
 import {
   FaArrowLeft,
   FaStore,
@@ -14,51 +14,99 @@ import {
   FaUserSecret,
   FaDollarSign,
   FaCalendar,
+  FaLink,
+  FaImage,
 } from "react-icons/fa";
+
+// Component to display a single image attachment with preview and error handling
+const ImageAttachmentPreview = ({ label, attachmentUrl }) => {
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageError, setImageError] = useState(false);
+
+  useEffect(() => {
+    setImageLoaded(false);
+    setImageError(false);
+  }, [attachmentUrl]);
+
+  if (!attachmentUrl) {
+    return (
+      <div className="flex flex-col gap-2 p-4 bg-gray-50 rounded-lg border border-gray-100">
+        <span className="font-semibold text-gray-600">{label}:</span>
+        <span className="text-gray-500">No image found.</span>
+      </div>
+    );
+  }
+
+  const imageUrl = `${process.env.NEXT_PUBLIC_IMAGE_BASE_URL}/${attachmentUrl}`;
+
+  return (
+    <div className="flex flex-col gap-2 p-4 bg-gray-50 rounded-lg border border-gray-100">
+      <span className="font-semibold text-gray-600">{label}:</span>
+      <div className="w-full relative min-h-[150px]">
+        {!imageLoaded && !imageError && (
+          <div className="flex items-center justify-center absolute inset-0 w-full h-full bg-gray-200 rounded-md animate-pulse">
+            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-500"></div>
+          </div>
+        )}
+        {imageError ? (
+          <div className="flex items-center justify-center absolute inset-0 w-full h-full bg-gray-200 text-gray-500 rounded-md">
+            Failed to load image
+          </div>
+        ) : (
+          <a href={imageUrl} target="_blank" rel="noopener noreferrer" className="block">
+            <img
+              src={imageUrl}
+              alt={label}
+              className={`w-full h-auto rounded-md shadow-md transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+              onLoad={() => setImageLoaded(true)}
+              onError={() => setImageError(true)}
+              style={{ display: imageLoaded ? 'block' : 'none' }}
+            />
+          </a>
+        )}
+      </div>
+      <a
+        href={imageUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center gap-2 text-indigo-600 hover:text-indigo-700 hover:underline font-medium transition mt-2"
+      >
+        <FaLink /> View in new tab
+      </a>
+    </div>
+  );
+};
 
 const StoreDetailsPage = () => {
   const { id } = useParams();
   const [storeData, setStoreData] = useState(null);
-  const [storeImage, setStoreImage] = useState(null); // ✅ State to hold the image URL
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const router = useRouter();
 
-  const NEXT_PUBLIC_IMAGE_BASE_URL = process.env.NEXT_PUBLIC_IMAGE_BASE_URL;
-
-  // Function to fetch store details by ID
-  const fetchStoreDetails = async (StoreID) => {
-    try {
-      setLoading(true);
-      setError(null);
-      const res = await axios.get(
-        `${process.env.NEXT_PUBLIC_STORE_URL}/GetStoreById`,
-        { params: { id: StoreID } }
-      );
-
-      if (res.data && res.data.length > 0) {
-        setStoreData(res.data[0]);
-        // ✅ Assuming your API response includes a property like 'StoreImageName'
-        const imageFileName = res.data[0].StoreImageName;
-        if (imageFileName) {
-          // Construct the full image URL. Adjust the path if needed.
-          // const fullImageUrl = `http://122.160.25.202/micron/app/uploads/${imageFileName}`;
-          const fullImageUrl = `http://122.160.25.202/uploads/${imageFileName}`;
-          setStoreImage(fullImageUrl);
-        }
-      } else {
-        setError("Store not found.");
-      }
-    } catch (err) {
-      console.error("Error fetching store details", err);
-      setError("Failed to fetch store details. Please try again later.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
     if (id) {
+      const fetchStoreDetails = async (StoreID) => {
+        try {
+          setLoading(true);
+          setError(null);
+          const res = await axios.get(
+            `${process.env.NEXT_PUBLIC_STORE_URL}/GetStoreById`,
+            { params: { id: StoreID } }
+          );
+
+          if (res.data && res.data.length > 0) {
+            setStoreData(res.data[0]);
+          } else {
+            setError("Store not found.");
+          }
+        } catch (err) {
+          console.error("Error fetching store details", err);
+          setError("Failed to fetch store details. Please try again later.");
+        } finally {
+          setLoading(false);
+        }
+      };
       fetchStoreDetails(id);
     }
   }, [id]);
@@ -104,6 +152,11 @@ const StoreDetailsPage = () => {
     );
   }
 
+  // Determine the image URL for the main store image
+  const storeImage = storeData.StoreImageName
+    ? `${process.env.NEXT_PUBLIC_IMAGE_BASE_URL}/uploads/${storeData.StoreImageName}`
+    : null;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-2">
       <button
@@ -137,7 +190,7 @@ const StoreDetailsPage = () => {
             </p>
           </div>
 
-          {/* Image Preview Section */}
+          {/* Main Store Image Preview Section */}
           {storeImage && (
             <div className="p-6">
               <h3 className="text-xl font-bold text-gray-800 mb-4">
@@ -150,7 +203,7 @@ const StoreDetailsPage = () => {
                   layout="fill"
                   objectFit="cover"
                   className="rounded-xl"
-                  unoptimized // Use this if you don't configure remotePatterns in next.config.js
+                  unoptimized
                 />
               </div>
             </div>
@@ -171,7 +224,7 @@ const StoreDetailsPage = () => {
               {renderDataField(
                 "Created At",
                 new Date(storeData.CreatedAt).toLocaleDateString(),
-                <FaCalendar/>
+                <FaCalendar />
               )}
               {renderDataField(
                 "Generated Store ID",
@@ -208,39 +261,24 @@ const StoreDetailsPage = () => {
                 storeData.AadharNumber,
                 <FaFileAlt />
               )}
-
-              {/* Attachments */}
-              {storeData.PANNumberAttachment && (
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
-                  <span className="font-semibold text-gray-600">
-                    PAN Attachment:
-                  </span>
-                  <a
-                    href={`${process.env.NEXT_PUBLIC_IMAGE_BASE_URL}/${storeData.PANNumberAttachment}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-indigo-600 hover:underline font-medium"
-                  >
-                    View
-                  </a>
-                </div>
-              )}
-
-              {storeData.AadharNumberAttachment && (
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
-                  <span className="font-semibold text-gray-600">
-                    Aadhar Attachment:
-                  </span>
-                  <a
-                    href={`${process.env.NEXT_PUBLIC_IMAGE_BASE_URL}/${storeData.AadharNumberAttachment}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-indigo-600 hover:underline font-medium"
-                  >
-                    View
-                  </a>
-                </div>
-              )}
+            </div>
+          </div>
+          
+          {/* Attachments Section */}
+          <div className="p-6 border-t border-gray-200">
+            <h2 className="text-2xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
+              <FaImage className="text-indigo-500" />
+              Attachment Previews
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <ImageAttachmentPreview
+                label="PAN Card"
+                attachmentUrl={storeData.PANNumberAttachment}
+              />
+              <ImageAttachmentPreview
+                label="Aadhar Card"
+                attachmentUrl={storeData.AadharNumberAttachment}
+              />
             </div>
           </div>
         </div>

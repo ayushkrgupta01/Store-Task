@@ -23,6 +23,44 @@ import {
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
+// This component now handles the image preview logic
+const ImagePreview = ({ imageUrl, handleClear, loading, label }) => {
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-48 bg-gray-100 rounded-lg">
+        <FaSpinner className="animate-spin text-4xl text-indigo-500" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative mt-4 group">
+      <img
+        src={imageUrl}
+        alt={`${label} Preview`}
+        className="w-full h-auto max-h-48 object-contain rounded-lg border border-gray-200 shadow-md"
+      />
+      <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-lg">
+        <button
+          type="button"
+          onClick={handleClear}
+          className="text-white hover:text-red-400 transition-colors mx-2 p-2 rounded-full bg-red-600 bg-opacity-75 hover:bg-opacity-100"
+        >
+          <FaTimesCircle className="text-2xl" />
+        </button>
+        <a
+          href={imageUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-white hover:text-indigo-400 transition-colors mx-2 p-2 rounded-full bg-indigo-600 bg-opacity-75 hover:bg-opacity-100"
+        >
+          <FaEye className="text-2xl" />
+        </a>
+      </div>
+    </div>
+  );
+};
+
 const EditStore = () => {
   const { id } = useParams();
   const router = useRouter();
@@ -30,64 +68,16 @@ const EditStore = () => {
   const [countries, setCountries] = useState([]);
   const [states, setStates] = useState([]);
   const [cities, setCities] = useState([]);
-  const [aadharCard, setAadharCard] = useState("");
-  const [panCard, setPanCard] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadingPan, setUploadingPan] = useState(false);
   const [uploadingAadhar, setUploadingAadhar] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // New state variables for image previews
+  // State variables for image previews (local URLs) and filenames
   const [panPreviewUrl, setPanPreviewUrl] = useState(null);
   const [aadharPreviewUrl, setAadharPreviewUrl] = useState(null);
-
-  // ✅ Fetch store details
-  useEffect(() => {
-    if (id) {
-      axios
-        .get(`${process.env.NEXT_PUBLIC_STORE_URL}/GetStoreById`, {
-          params: { id: id }, // ✅ pass as query param
-        })
-        .then((res) => {
-          if (res.data && res.data.length > 0) {
-            const s = res.data[0];
-            formik.setValues({
-              storeName: s.StoreName || "",
-              email: s.Email || "",
-              phone: s.Phone || "",
-              address: s.Address || "",
-              country: s.CountryId || "",
-              state: s.StateId || "",
-              city: s.CityId || "",
-              panNumber: s.PANNumber || "",
-              panNumberAttachment: s.PANNumberAttachment || "",
-              aadharNumber: s.AadharNumber || "",
-              aadharNumberAttachment: s.AadharNumberAttachment || "",
-            });
-            setPanCard(s.PANNumberAttachment || "");
-            setAadharCard(s.AadharNumberAttachment || "");
-
-            // Set initial preview URLs if attachments exist
-            if (s.PANNumberAttachment) {
-              setPanPreviewUrl(
-                `${process.env.NEXT_PUBLIC_IMAGE_BASE_URL}/${s.PANNumberAttachment}`
-              );
-            }
-            if (s.AadharNumberAttachment) {
-              setAadharPreviewUrl(
-                `${process.env.NEXT_PUBLIC_IMAGE_BASE_URL}/${s.AadharNumberAttachment}`
-              );
-            }
-          }
-          setLoading(false);
-        })
-        .catch((err) => {
-          console.error(err);
-          toast.error("Failed to load store data.");
-          setLoading(false);
-        });
-    }
-  }, [id]);
+  const [panFileName, setPanFileName] = useState("");
+  const [aadharFileName, setAadharFileName] = useState("");
 
   // ✅ Formik
   const formik = useFormik({
@@ -129,9 +119,10 @@ const EditStore = () => {
           StateId: values.state,
           CityId: values.city,
           PanNumber: values.panNumber,
-          PANNumberAttachment: values.panCard,
+          // Use the stored filename, which could be old or new
+          PANNumberAttachment: panFileName,
           AadharNumber: values.aadharNumber,
-          AadharNumberAttachment: values.aadharCard,
+          AadharNumberAttachment: aadharFileName,
           ActionMode: "UPDATE",
         };
         const response = await axios.post(
@@ -152,6 +143,54 @@ const EditStore = () => {
       }
     },
   });
+
+  // ✅ Fetch store details and set initial values
+  useEffect(() => {
+    if (id) {
+      axios
+        .get(`${process.env.NEXT_PUBLIC_STORE_URL}/GetStoreById`, {
+          params: { id: id },
+        })
+        .then((res) => {
+          if (res.data && res.data.length > 0) {
+            const s = res.data[0];
+            formik.setValues({
+              storeName: s.StoreName || "",
+              email: s.Email || "",
+              phone: s.Phone || "",
+              address: s.Address || "",
+              country: s.CountryId || "",
+              state: s.StateId || "",
+              city: s.CityId || "",
+              panNumber: s.PANNumber || "",
+              panNumberAttachment: s.PANNumberAttachment || "",
+              aadharNumber: s.AadharNumber || "",
+              aadharNumberAttachment: s.AadharNumberAttachment || "",
+            });
+
+            // Set state for filenames and preview URLs
+            if (s.PANNumberAttachment) {
+              setPanFileName(s.PANNumberAttachment);
+              setPanPreviewUrl(
+                `${process.env.NEXT_PUBLIC_IMAGE_BASE_URL}/${s.PANNumberAttachment}`
+              );
+            }
+            if (s.AadharNumberAttachment) {
+              setAadharFileName(s.AadharNumberAttachment);
+              setAadharPreviewUrl(
+                `${process.env.NEXT_PUBLIC_IMAGE_BASE_URL}/${s.AadharNumberAttachment}`
+              );
+            }
+          }
+          setLoading(false);
+        })
+        .catch((err) => {
+          console.error(err);
+          toast.error("Failed to load store data.");
+          setLoading(false);
+        });
+    }
+  }, [id]);
 
   // ✅ Load countries
   useEffect(() => {
@@ -185,52 +224,30 @@ const EditStore = () => {
     }
   }, [formik.values.state]);
 
-  // ✅ File upload
+  // ✅ File upload handler
   const handleFileUploadChange = async (e, uploadtype) => {
     const file = e.target.files[0] || null;
-    const field =
-      uploadtype === "Pan" ? "panNumberAttachment" : "aadharNumberAttachment";
-
     if (!file) {
-      if (uploadtype === "Pan") {
-        setPanPreviewUrl(null);
-      } else {
-        setAadharPreviewUrl(null);
-      }
       return;
-    }
-
-    // Set file preview URL
-    const fileUrl = URL.createObjectURL(file);
-    if (uploadtype === "Pan") {
-      setPanPreviewUrl(fileUrl);
-    } else {
-      setAadharPreviewUrl(fileUrl);
     }
 
     const allowedTypes = ["image/jpeg", "image/png", "image/gif"];
     if (!allowedTypes.includes(file.type)) {
       toast.error("Invalid file type. Only JPG, PNG, GIF allowed.");
-      if (uploadtype === "Pan") {
-        setPanPreviewUrl(null);
-      } else {
-        setAadharPreviewUrl(null);
-      }
       return;
     }
     if (file.size > 1 * 1024 * 1024) {
       toast.error("File too large (max 1MB).");
-      if (uploadtype === "Pan") {
-        setPanPreviewUrl(null);
-      } else {
-        setAadharPreviewUrl(null);
-      }
       return;
     }
 
+    // Create a local URL for instant preview
+    const fileUrl = URL.createObjectURL(file);
     if (uploadtype === "Pan") {
+      setPanPreviewUrl(fileUrl);
       setUploadingPan(true);
     } else {
+      setAadharPreviewUrl(fileUrl);
       setUploadingAadhar(true);
     }
 
@@ -245,12 +262,12 @@ const EditStore = () => {
       );
       if (res.data?.success && res.data?.fileName) {
         if (uploadtype === "Pan") {
-          setPanCard(res.data.fileName);
+          setPanFileName(res.data.fileName);
+          toast.success("PAN image uploaded successfully!");
         } else {
-          setAadharCard(res.data.fileName);
+          setAadharFileName(res.data.fileName);
+          toast.success("Aadhar image uploaded successfully!");
         }
-        formik.setFieldValue(field, res.data.fileName);
-        toast.success(`${uploadtype} image uploaded successfully!`);
       } else {
         toast.error("Upload failed");
       }
@@ -267,13 +284,11 @@ const EditStore = () => {
 
   const clearImage = (type) => {
     if (type === "pan") {
-      setPanCard("");
+      setPanFileName("");
       setPanPreviewUrl(null);
-      formik.setFieldValue("panNumberAttachment", "");
     } else if (type === "aadhar") {
-      setAadharCard("");
+      setAadharFileName("");
       setAadharPreviewUrl(null);
-      formik.setFieldValue("aadharNumberAttachment", "");
     }
   };
 
@@ -618,32 +633,17 @@ const EditStore = () => {
                       ) : (
                         <FaUpload className="mr-2 text-indigo-500" />
                       )}
-                      {panCard ? "Update PAN Card" : "Upload PAN Card"}
+                      {panPreviewUrl ? "Update PAN Card" : "Upload PAN Card"}
                     </label>
                   </div>
                   {panPreviewUrl && (
-                    <div className="relative mt-4">
-                      <img
-                        src={`${process.env.NEXT_PUBLIC_IMAGE_BASE_URL}/${formik.values.panCard}`}
-                        alt="PAN Card Preview"
-                        className="w-full h-auto max-h-48 object-contain rounded-lg border border-gray-200 shadow-md"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => clearImage("pan")}
-                        className="absolute top-2 right-2 text-red-500 hover:text-red-700 transition-colors"
-                      >
-                        <FaTimesCircle className="text-2xl" />
-                      </button>
-                    </div>
+                    <ImagePreview
+                      imageUrl={panPreviewUrl}
+                      handleClear={() => clearImage("pan")}
+                      loading={uploadingPan}
+                      label="PAN Card"
+                    />
                   )}
-                  {formik.touched.panNumberAttachment &&
-                    formik.errors.panNumberAttachment && (
-                      <div className="text-red-500 text-sm mt-1 flex items-center">
-                        <FaInfoCircle className="mr-1" />
-                        {formik.errors.panNumberAttachment}
-                      </div>
-                    )}
                 </div>
               </div>
 
@@ -708,32 +708,17 @@ const EditStore = () => {
                       ) : (
                         <FaUpload className="mr-2 text-indigo-500" />
                       )}
-                      {aadharCard ? "Update Aadhar Card" : "Upload Aadhar Card"}
+                      {aadharPreviewUrl ? "Update Aadhar Card" : "Upload Aadhar Card"}
                     </label>
                   </div>
                   {aadharPreviewUrl && (
-                    <div className="relative mt-4">
-                      <img
-                        src={`${process.env.NEXT_PUBLIC_IMAGE_BASE_URL}/${formik.values.aadharCard}`}
-                        alt="Aadhar Card Preview"
-                        className="w-full h-auto max-h-48 object-contain rounded-lg border border-gray-200 shadow-md"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => clearImage("aadhar")}
-                        className="absolute top-2 right-2 text-red-500 hover:text-red-700 transition-colors"
-                      >
-                        <FaTimesCircle className="text-2xl" />
-                      </button>
-                    </div>
+                    <ImagePreview
+                      imageUrl={aadharPreviewUrl}
+                      handleClear={() => clearImage("aadhar")}
+                      loading={uploadingAadhar}
+                      label="Aadhar Card"
+                    />
                   )}
-                  {formik.touched.aadharNumberAttachment &&
-                    formik.errors.aadharNumberAttachment && (
-                      <div className="text-red-500 text-sm mt-1 flex items-center">
-                        <FaInfoCircle className="mr-1" />
-                        {formik.errors.aadharNumberAttachment}
-                      </div>
-                    )}
                 </div>
               </div>
 
@@ -741,9 +726,9 @@ const EditStore = () => {
               <div className="pt-6">
                 <button
                   type="submit"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || uploadingPan || uploadingAadhar}
                   className={`w-full flex justify-center items-center py-4 px-6 border border-transparent rounded-xl shadow-lg text-lg font-semibold text-white transition-all duration-200 ${
-                    isSubmitting
+                    isSubmitting || uploadingPan || uploadingAadhar
                       ? "bg-gray-400 cursor-not-allowed"
                       : "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 transform hover:scale-[1.02] active:scale-[0.98]"
                   }`}
