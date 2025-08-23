@@ -129,9 +129,9 @@ const EditStore = () => {
           StateId: values.state,
           CityId: values.city,
           PanNumber: values.panNumber,
-          PANNumberAttachment: panCard,
+          PANNumberAttachment: values.panCard,
           AadharNumber: values.aadharNumber,
-          AadharNumberAttachment: aadharCard,
+          AadharNumberAttachment: values.aadharCard,
           ActionMode: "UPDATE",
         };
         const response = await axios.post(
@@ -624,7 +624,7 @@ const EditStore = () => {
                   {panPreviewUrl && (
                     <div className="relative mt-4">
                       <img
-                        src={`${process.env.NEXT_PUBLIC_IMAGE_BASE_URL}/${formik.values.panNumberAttachment}`}
+                        src={`${process.env.NEXT_PUBLIC_IMAGE_BASE_URL}/${formik.values.panCard}`}
                         alt="PAN Card Preview"
                         className="w-full h-auto max-h-48 object-contain rounded-lg border border-gray-200 shadow-md"
                       />
@@ -714,7 +714,7 @@ const EditStore = () => {
                   {aadharPreviewUrl && (
                     <div className="relative mt-4">
                       <img
-                        src={`${process.env.NEXT_PUBLIC_IMAGE_BASE_URL}/${formik.values.aadharNumberAttachment}`}
+                        src={`${process.env.NEXT_PUBLIC_IMAGE_BASE_URL}/${formik.values.aadharCard}`}
                         alt="Aadhar Card Preview"
                         className="w-full h-auto max-h-48 object-contain rounded-lg border border-gray-200 shadow-md"
                       />
