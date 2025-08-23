@@ -2,7 +2,11 @@
 
 import { useParams, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { FaArrowLeft, FaUser, FaEnvelope, FaPhone, FaFileAlt, FaMapMarkerAlt, FaLink, FaCalendarAlt, FaIdCard, FaStore, FaIdBadge } from 'react-icons/fa';
+import { FaArrowLeft, FaUser, FaEnvelope, FaPhone, FaFileAlt, FaLink, FaCalendarAlt, FaIdCard, FaStore, FaIdBadge, FaSpinner } from 'react-icons/fa';
+
+// Constants for backend and image URLs
+const BACKEND_BASE_URL = process.env.NEXT_PUBLIC_SERVICES_URL;
+const NEXT_PUBLIC_IMAGE_CUSTOMER = process.env.NEXT_PUBLIC_IMAGE_CUSTOMER;
 
 export default function CustomerDetails() {
   const { id } = useParams();
@@ -11,12 +15,9 @@ export default function CustomerDetails() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Base URL for images
-  const NEXT_PUBLIC_IMAGE_CUSTOMER = process.env.NEXT_PUBLIC_IMAGE_CUSTOMER;
-
   useEffect(() => {
     if (!id) return;
-    const BACKEND_BASE_URL = process.env.NEXT_PUBLIC_SERVICES_URL;
+
     setLoading(true);
     setError(null);
 
@@ -59,8 +60,8 @@ export default function CustomerDetails() {
   // UI states
   if (loading) {
     return (
-      <div className="p-4 flex flex-col items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-indigo-500"></div>
+      <div className="p-4 flex flex-col items-center justify-center min-h-screen">
+        <FaSpinner className="animate-spin text-indigo-500 h-12 w-12" />
         <p className="mt-4 text-gray-700 font-medium">Loading customer details...</p>
       </div>
     );
@@ -68,7 +69,7 @@ export default function CustomerDetails() {
 
   if (error) {
     return (
-      <div className="p-4 flex items-center justify-center h-64 text-red-500 font-medium">
+      <div className="p-4 flex items-center justify-center min-h-screen text-red-500 font-medium">
         <p>{error}</p>
       </div>
     );
@@ -76,17 +77,17 @@ export default function CustomerDetails() {
 
   if (!user) {
     return (
-      <div className="p-4 flex items-center justify-center h-64 text-gray-500">
+      <div className="p-4 flex items-center justify-center min-h-screen text-gray-500">
         <p>No customer data available.</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-2">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-8">
       <button
         onClick={() => router.back()}
-        className="flex items-center gap-2 text-indigo-600 hover:text-indigo-700 transition-colors"
+        className="flex items-center gap-2 text-indigo-600 hover:text-indigo-700 transition-colors mb-6"
       >
         <FaArrowLeft />
         Back
@@ -94,7 +95,7 @@ export default function CustomerDetails() {
 
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="ml-8 mb-8">
+        <div className="mb-8">
           <h1 className="text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
             Customer Profile
           </h1>
@@ -130,9 +131,9 @@ export default function CustomerDetails() {
               {renderDataField('Aadhar Number', user.Customer_AadharNumber, <FaFileAlt />)}
               {renderDataField('PAN Number', user.Customer_PanNumber, <FaFileAlt />)}
               {renderDataField('Product Amount', `₹${user.Customer_ProductAmount}`, <FaFileAlt />)}
-              {renderDataField('Date', new Date(user.Customer_Date).toLocaleDateString(), <FaCalendarAlt />)}
+              {renderDataField('Date', user.Customer_Date ? new Date(user.Customer_Date).toLocaleDateString() : 'N/A', <FaCalendarAlt />)}
               {renderDataField('Service', user.service_name, <FaFileAlt />)}
-              {renderDataField('Store ID', user.GeneratedStoreID, <FaFileAlt />)}
+              {renderDataField('Generated Store ID', user.GeneratedStoreID, <FaIdBadge />)}
             </div>
           </div>
 
@@ -146,14 +147,21 @@ export default function CustomerDetails() {
               <div className="flex flex-col gap-2 p-4 bg-gray-50 rounded-lg border border-gray-100">
                 <span className="font-semibold text-gray-600">Aadhar Card:</span>
                 {user.Customer_Aadhar ? (
-                  <a
-                    href={`${process.env.NEXT_PUBLIC_IMAGE_CUSTOMER}/${user.Customer_Aadhar}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-indigo-600 hover:text-indigo-700 hover:underline font-medium transition"
-                  >
-                    <FaLink /> View Aadhar Attachment
-                  </a>
+                  <>
+                    <a
+                      href={`${NEXT_PUBLIC_IMAGE_CUSTOMER}/${user.Customer_Aadhar}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block"
+                    >
+                      <img
+                        src={`${NEXT_PUBLIC_IMAGE_CUSTOMER}/${user.Customer_Aadhar}`}
+                        alt="Aadhar Card Preview"
+                        className="mt-2 rounded-md border border-gray-200 shadow-sm w-full h-auto object-contain"
+                      />
+                    </a>
+                    <p className="text-sm text-center text-gray-500 mt-2">Click image to view full size.</p>
+                  </>
                 ) : (
                   <span className="text-gray-500">No Aadhar attachment found.</span>
                 )}
@@ -163,14 +171,21 @@ export default function CustomerDetails() {
               <div className="flex flex-col gap-2 p-4 bg-gray-50 rounded-lg border border-gray-100">
                 <span className="font-semibold text-gray-600">PAN Card:</span>
                 {user.Customer_PanCard ? (
-                  <a
-                    href={`${process.env.NEXT_PUBLIC_IMAGE_CUSTOMER}/${user.Customer_PanCard}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-indigo-600 hover:text-indigo-700 hover:underline font-medium transition"
-                  >
-                    <FaLink /> View PAN Attachment
-                  </a>
+                  <>
+                    <a
+                      href={`${NEXT_PUBLIC_IMAGE_CUSTOMER}/${user.Customer_PanCard}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block"
+                    >
+                      <img
+                        src={`${NEXT_PUBLIC_IMAGE_CUSTOMER}/${user.Customer_PanCard}`}
+                        alt="PAN Card Preview"
+                        className="mt-2 rounded-md border border-gray-200 shadow-sm w-full h-auto object-contain"
+                      />
+                    </a>
+                    <p className="text-sm text-center text-gray-500 mt-2">Click image to view full size.</p>
+                  </>
                 ) : (
                   <span className="text-gray-500">No PAN attachment found.</span>
                 )}

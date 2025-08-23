@@ -4,7 +4,6 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useRouter, useParams } from "next/navigation";
 import React, { useEffect, useState } from "react";
-import Image from "next/image"; // ✅ Import the Image component
 import {
   FaUser,
   FaEnvelope,
@@ -32,8 +31,8 @@ function UpdateCustomer() {
     Customer_AadharNumber: "",
     Customer_PanNumber: "",
     Customer_ProductAmount: "",
-    customer_aadhar: "", // This will hold the Aadhar image filename
-    customer_pancard: "", // This will hold the PAN card image filename
+    customer_aadhar: "",
+    customer_pancard: "",
     Productservices_Id: "",
   });
 
@@ -159,14 +158,14 @@ function UpdateCustomer() {
         CustomerID: id,
         Customer_Name: formData.customer_name,
         Customer_Email: formData.customer_email,
-        Customer_Phone: formData.customer_phone, // ✅ Fix casing
+        Customer_Phone: formData.customer_phone,
         Customer_AadharNumber: formData.Customer_AadharNumber,
         Customer_PanNumber: formData.Customer_PanNumber,
         Customer_ProductAmount: formData.Customer_ProductAmount,
         Customer_Aadhar: formData.customer_aadhar,
         Customer_PanCard: formData.customer_pancard,
         Productservices_Id: formData.Productservices_Id,
-        ActionMode: "UPDATE", // ✅ Important
+        ActionMode: "UPDATE",
       };
 
       const response = await axios.post(
@@ -180,8 +179,7 @@ function UpdateCustomer() {
         );
         navigate.push("/admin/customers/manageCustomers");
       } else {
-         toast.success( "Customer updated successfully!"
-        );
+        toast.success("Customer updated successfully!");
         navigate.push("/admin/customers/manageCustomers");
       }
     } catch (error) {
@@ -372,16 +370,13 @@ function UpdateCustomer() {
                         : "Upload Aadhar Card"}
                     </label>
                   </div>
-                  {/* FIX: Use a consistent URL structure and the correct Next.js Image component */}
+                  {/* FIX: Use standard <img> tag */}
                   {formData.customer_aadhar && (
-                    <div className="relative mt-4 w-full h-32 md:h-48">
-                      <Image
-                        src={`${process.env.NEXT_PUBLIC_IMAGE_CUSTOMER}/${formData.customer_aadhar}`}
+                    <div className="relative mt-4 w-full h-auto max-h-48 overflow-hidden rounded-md shadow-sm border border-gray-200">
+                      <img
+                        src={`${NEXT_PUBLIC_IMAGE_CUSTOMER}/${formData.customer_aadhar}`}
                         alt="Aadhar preview"
-                        layout="fill"
-                        objectFit="contain"
-                        className="rounded-md shadow-sm border border-gray-200"
-                        unoptimized // Use unoptimized if the image is from a non-configured remote host
+                        className="w-full h-full object-contain"
                       />
                     </div>
                   )}
@@ -422,16 +417,13 @@ function UpdateCustomer() {
                         : "Upload PAN Card"}
                     </label>
                   </div>
-                  {/* FIX: Use a consistent URL structure and the correct Next.js Image component */}
+                  {/* FIX: Use standard <img> tag */}
                   {formData.customer_pancard && (
-                    <div className="relative mt-4 w-full h-32 md:h-48">
-                      <Image
-                        src={`${process.env.NEXT_PUBLIC_IMAGE_CUSTOMER}/${formData.customer_pancard}`}
+                    <div className="relative mt-4 w-full h-auto max-h-48 overflow-hidden rounded-md shadow-sm border border-gray-200">
+                      <img
+                        src={`${NEXT_PUBLIC_IMAGE_CUSTOMER}/${formData.customer_pancard}`}
                         alt="PAN preview"
-                        layout="fill"
-                        objectFit="contain"
-                        className="rounded-md shadow-sm border border-gray-200"
-                        unoptimized // Use unoptimized if the image is from a non-configured remote host
+                        className="w-full h-full object-contain"
                       />
                     </div>
                   )}
