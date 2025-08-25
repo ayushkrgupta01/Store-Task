@@ -187,11 +187,11 @@ function UpdateCustomer() {
         toast.success(
           response.data[0].message || "Customer updated successfully!"
         );
-        router.push("/customers"); // Navigate to a specific page after success
+        router.back(); // Navigate to a specific page after success
       } else {
         // Handle API success but with a different status code or message
         toast.success("Customer updated successfully!");
-        router.push("/customers");
+        router.back();
       }
     } catch (error) {
       console.error("Update Error:", error);
