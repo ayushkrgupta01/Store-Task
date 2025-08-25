@@ -177,7 +177,7 @@ function UpdateCustomer() {
         toast.success(
           response.data[0].message || "Customer updated successfully!"
         );
-        navigate.push("/admin/customers/manageCustomers");
+        navigate.back();
       } else {
         toast.success("Customer updated successfully!");
         navigate.push("/admin/customers/manageCustomers");

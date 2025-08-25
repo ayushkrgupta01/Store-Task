@@ -12,6 +12,7 @@ import {
   FaSort,
   FaSortUp,
   FaSortDown,
+  FaPlus,
 } from "react-icons/fa";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -70,6 +71,10 @@ const AllStores = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleAddCustomer = (storeId) => {
+    router.push(`/admin/customers/customerForm/${storeId}`);
   };
 
   const confirmDelete = (store) => {
@@ -135,9 +140,15 @@ const AllStores = () => {
 
     const matchesQuery =
       !q ||
-      String(getValue(store, ["StoreName"])).toLowerCase().includes(q) ||
-      String(getValue(store, ["Email"])).toLowerCase().includes(q) ||
-      String(getValue(store, ["Phone"])).toLowerCase().includes(q) ||
+      String(getValue(store, ["StoreName"]))
+        .toLowerCase()
+        .includes(q) ||
+      String(getValue(store, ["Email"]))
+        .toLowerCase()
+        .includes(q) ||
+      String(getValue(store, ["Phone"]))
+        .toLowerCase()
+        .includes(q) ||
       String(getValue(store, ["StateName", "State", "state"]))
         .toLowerCase()
         .includes(q) ||
@@ -456,7 +467,7 @@ const AllStores = () => {
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full border-collapse min-w-[800px]">
+                <table className="w-full border-collapse min-w-[1200px]">
                   <thead>
                     <tr className="text-left text-xs uppercase tracking-wide text-gray-600">
                       <th
@@ -558,7 +569,7 @@ const AllStores = () => {
                           {getSortIcon("aadhar")}
                         </div>
                       </th>
-                      <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
+                      <th className="min-w-[250px] p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
                         Actions
                       </th>
                     </tr>
@@ -641,7 +652,7 @@ const AllStores = () => {
                             ])}
                           </td>
 
-                          <td className="p-3 border-t">
+                          <td className="p-3 border-t min-w-[250px]">
                             <div className="flex flex-wrap gap-2">
                               <button
                                 onClick={() =>
@@ -671,13 +682,21 @@ const AllStores = () => {
                                 }
                                 className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded flex items-center gap-1 text-sm transition-colors"
                               >
-                                <FaUserFriends /> Customers
+                                <FaUserFriends />
+                                Total Customers
                               </button>
                               <button
                                 onClick={() => confirmDelete(store)}
                                 className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded flex items-center gap-1 text-sm transition-colors"
                               >
                                 <FaTrash /> Delete
+                              </button>
+                              <button
+                                onClick={() => handleAddCustomer(store.StoreID)}
+                                className="bg-purple-500 hover:bg-purple-600 text-white px-3 py-1 rounded flex items-center gap-1 text-sm transition-colors"
+                              >
+                                <FaPlus />
+                                Add New Customer
                               </button>
                             </div>
                           </td>

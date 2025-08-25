@@ -206,7 +206,7 @@ const CustomersByStore = () => {
   const handleUpdate = (customerId) =>
     router.push(`/admin/customers/editCustomer/${customerId}`);
   const handleAddCustomer = () =>
-    router.push(`/admin/customers/customerForm`);
+    router.push(`/admin/customers/customerForm/${id}`);
 
   const handleDeleteInitiate = (customerId) => {
     setCustomerToDeleteId(customerId);

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import {
@@ -17,15 +17,16 @@ import {
   FaSpinner,
   FaFileAlt,
   FaArrowLeft,
-  FaInfoCircle,
   FaLaptop,
 } from "react-icons/fa";
 
 const UPLOAD_URL = `${process.env.NEXT_PUBLIC_STORE_URL}/PostUserImage`;
 const BACKEND_BASE_URL = process.env.NEXT_PUBLIC_SERVICES_URL;
 
-export default function CustomerForm() {
+export default function CustomerFormForRandomStore() {
   const router = useRouter();
+  const params = useParams();
+  const storeId = params.id; // Correctly get the storeId from the URL
   const [product, setProduct] = useState([]);
   const [aadharFileName, setAadharFileName] = useState("");
   const [panFileName, setPanFileName] = useState("");
@@ -74,19 +75,22 @@ export default function CustomerForm() {
   };
 
   useEffect(() => {
-    const fetchProductServices = async () => {
-      try {
-        const response = await axios.get(
-          `${BACKEND_BASE_URL}/GetProductService`
-        );
-        setProduct(response.data || []);
-      } catch (error) {
-        console.error("Error fetching services:", error);
-        toast.error("Failed to load services.");
-      }
-    };
-    fetchProductServices();
-  }, []);
+    // Only fetch services if storeId is present in the URL
+    if (storeId) {
+      const fetchProductServices = async () => {
+        try {
+          const response = await axios.get(
+            `${BACKEND_BASE_URL}/GetProductService`
+          );
+          setProduct(response.data || []);
+        } catch (error) {
+          console.error("Error fetching services:", error);
+          toast.error("Failed to load services.");
+        }
+      };
+      fetchProductServices();
+    }
+  }, [storeId]); // Depend on storeId
 
   // Yup validation schema
   const validationSchema = Yup.object().shape({
@@ -115,7 +119,6 @@ export default function CustomerForm() {
   };
 
   // Formik submit handler
-  // Formik submit handler
   const handleSubmit = async (values, { setSubmitting, resetForm }) => {
     if (!aadharFileName || !panFileName) {
       toast.error("Please upload both Aadhar and PAN images.");
@@ -123,20 +126,12 @@ export default function CustomerForm() {
       return;
     }
 
-    // 🔹 Get StoreID from localStorage
-    let storeId = null;
-    try {
-      const adminInfo = JSON.parse(localStorage.getItem("adminInfo"));
-      storeId = adminInfo?.storeId || null;
-    } catch (err) {
-      console.error("Error reading storeId from localStorage:", err);
-    }
-
+    // Now getting storeId from the URL params, not localStorage
     const payload = {
       ...values,
       customer_aadhar: aadharFileName,
       customer_pancard: panFileName,
-      storeId: storeId, // ✅ Add storeId to backend payload
+      storeId: storeId, // Use the storeId from the URL
     };
 
     try {

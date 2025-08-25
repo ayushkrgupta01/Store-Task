@@ -12,6 +12,7 @@ import {
   FaSort,
   FaSortUp,
   FaSortDown,
+  FaPlus,
 } from "react-icons/fa";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -128,6 +129,10 @@ const ManageStores = () => {
     }
   };
 
+  const handleAddCustomer = (storeId) => {
+    router.push(`/admin/customers/customerForm/${storeId}`);
+  };
+
   // 📌 Fetch data on component mount
   useEffect(() => {
     fetchStores();
@@ -192,7 +197,10 @@ const ManageStores = () => {
   const totalPages = Math.ceil(sortedAndFilteredStores.length / storesPerPage);
   const indexOfLast = currentPage * storesPerPage;
   const indexOfFirst = indexOfLast - storesPerPage;
-  const currentStores = sortedAndFilteredStores.slice(indexOfFirst, indexOfLast);
+  const currentStores = sortedAndFilteredStores.slice(
+    indexOfFirst,
+    indexOfLast
+  );
 
   const handlePageChange = (page) => {
     if (page >= 1 && page <= totalPages) {
@@ -277,7 +285,6 @@ const ManageStores = () => {
 
     doc.save("all_stores_data.pdf");
   };
-
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-2">
@@ -387,7 +394,7 @@ const ManageStores = () => {
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full border-collapse min-w-[800px]">
+                <table className="w-full border-collapse min-w-[1200px]">
                   <thead>
                     <tr className="text-left text-xs uppercase tracking-wide text-gray-600">
                       <th
@@ -613,7 +620,7 @@ const ManageStores = () => {
                           <td className="p-3 text-sm border-t truncate">
                             {getValue(store, ["TotalSales"])}
                           </td>
-                          <td className="p-3 text-sm border-t">
+                          <td className="p-3 text-sm border-t min-w-[150px]">
                             {(() => {
                               const dateStr = getValue(store, ["CreatedAt"]);
                               if (!dateStr) return "N/A";
@@ -654,7 +661,7 @@ const ManageStores = () => {
                               "AadharNo",
                             ])}
                           </td>
-                          <td className="p-3 border-t">
+                          <td className="p-3 border-t min-w-[250px]">
                             <div className="flex flex-wrap gap-2">
                               <button
                                 onClick={() =>
@@ -691,6 +698,13 @@ const ManageStores = () => {
                                 className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded flex items-center gap-1 text-sm transition-colors"
                               >
                                 <FaTrash /> Delete
+                              </button>
+                              <button
+                                onClick={() => handleAddCustomer(store.StoreID)}
+                                className="bg-purple-500 hover:bg-purple-600 text-white px-3 py-1 rounded flex items-center gap-1 text-sm transition-colors"
+                              >
+                                <FaPlus />
+                                Add New Customer
                               </button>
                             </div>
                           </td>
