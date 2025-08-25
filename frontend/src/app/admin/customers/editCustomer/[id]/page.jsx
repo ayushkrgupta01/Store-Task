@@ -180,7 +180,7 @@ function UpdateCustomer() {
         navigate.back();
       } else {
         toast.success("Customer updated successfully!");
-        navigate.push("/admin/customers/manageCustomers");
+        navigate.back();
       }
     } catch (error) {
       console.error("Update Error:", error);

@@ -32,25 +32,34 @@ export default function CustomerFormForRandomStore() {
   const [panFileName, setPanFileName] = useState("");
   const [uploadingAadhar, setUploadingAadhar] = useState(false);
   const [uploadingPan, setUploadingPan] = useState(false);
+  // State variables for image previews
+  const [aadharPreview, setAadharPreview] = useState(null);
+  const [panPreview, setPanPreview] = useState(null);
 
   // File upload handler
-  const handleFileUpload = async (e, uploadType, setUploading, setFileName) => {
+  const handleFileUpload = async (e, uploadType, setUploading, setFileName, setFilePreview) => {
     const file = e.target.files[0] || null;
     if (!file) {
       toast.error("Please select an image file.");
+      setFilePreview(null);
       return;
     }
 
     const allowedTypes = ["image/jpeg", "image/png", "image/gif"];
     if (!allowedTypes.includes(file.type)) {
       toast.error("Invalid file type. Only JPG, PNG, GIF allowed.");
+      setFilePreview(null);
       return;
     }
     if (file.size > 1 * 1024 * 1024) {
       // 1MB
       toast.error("File too large. Max size is 1MB.");
+      setFilePreview(null);
       return;
     }
+
+    // Create a local URL for the file preview
+    setFilePreview(URL.createObjectURL(file));
 
     setUploading(true);
     const formDataPayload = new FormData();
@@ -64,11 +73,13 @@ export default function CustomerFormForRandomStore() {
         toast.success(`${uploadType} image uploaded successfully!`);
       } else {
         toast.error(res.data?.error || "Upload failed.");
+        setFilePreview(null);
       }
     } catch (err) {
       toast.error(
         err?.response?.data?.error || err.message || "Upload failed."
       );
+      setFilePreview(null);
     } finally {
       setUploading(false);
     }
@@ -144,6 +155,8 @@ export default function CustomerFormForRandomStore() {
         resetForm();
         setAadharFileName("");
         setPanFileName("");
+        setAadharPreview(null);
+        setPanPreview(null);
         router.back();
       } else {
         toast.error(response.data[0].message);
@@ -168,7 +181,7 @@ export default function CustomerFormForRandomStore() {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-2xl sm:text-3xl font-extrabold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-            Add Customer
+            Add Customer To Random Store
           </h1>
           <p className="text-gray-500 mt-1">
             Add New Customer with all required information
@@ -440,7 +453,8 @@ export default function CustomerFormForRandomStore() {
                               e,
                               "Aadhar",
                               setUploadingAadhar,
-                              setAadharFileName
+                              setAadharFileName,
+                              setAadharPreview
                             )
                           }
                           className="hidden"
@@ -463,6 +477,18 @@ export default function CustomerFormForRandomStore() {
                             : "Upload Aadhar Card"}
                         </label>
                       </div>
+                      {/* Aadhar Preview */}
+                      {aadharPreview && (
+                        <div className="mt-4">
+                          <h3 className="text-sm font-medium text-gray-600 mb-2">Aadhar Preview:</h3>
+                          <img
+                            src={aadharPreview}
+                            alt="Aadhar Card Preview"
+                            className="max-w-full h-auto rounded-lg border border-gray-200 shadow-sm"
+                            style={{ maxWidth: '300px' }}
+                          />
+                        </div>
+                      )}
                     </div>
 
                     {/* PAN Upload */}
@@ -484,7 +510,8 @@ export default function CustomerFormForRandomStore() {
                               e,
                               "Pan",
                               setUploadingPan,
-                              setPanFileName
+                              setPanFileName,
+                              setPanPreview
                             )
                           }
                           className="hidden"
@@ -507,6 +534,18 @@ export default function CustomerFormForRandomStore() {
                             : "Upload PAN Card"}
                         </label>
                       </div>
+                      {/* PAN Preview */}
+                      {panPreview && (
+                        <div className="mt-4">
+                          <h3 className="text-sm font-medium text-gray-600 mb-2">PAN Preview:</h3>
+                          <img
+                            src={panPreview}
+                            alt="PAN Card Preview"
+                            className="max-w-full h-auto rounded-lg border border-gray-200 shadow-sm"
+                            style={{ maxWidth: '300px' }}
+                          />
+                        </div>
+                      )}
                     </div>
                   </div>
 

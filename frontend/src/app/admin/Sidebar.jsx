@@ -170,7 +170,7 @@ const Sidebar = ({ onNavigate = () => {} }) => {
             </button>
             {openCustomers && (
               <ul className="py-2 space-y-2">
-                <li>
+                {/* <li>
                   <Link
                     href="/admin/customers/customerDashboard"
                     onClick={onNavigate}
@@ -178,7 +178,7 @@ const Sidebar = ({ onNavigate = () => {} }) => {
                   >
                     Customer Dashboard
                   </Link>
-                </li>
+                </li> */}
                 {/* <li>
                     <Link
                       href="/admin/customers/allCustomers"
@@ -189,6 +189,14 @@ const Sidebar = ({ onNavigate = () => {} }) => {
                   </li> */}
                 <li>
                   <Link
+                    href="/admin/customers/customerForm"
+                    className="flex items-center p-2 pl-11 w-full text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
+                  >
+                    Add Customer
+                  </Link>
+                </li>
+                <li>
+                  <Link
                     href="/admin/customers/manageCustomers"
                     onClick={onNavigate}
                     className="flex items-center p-2 pl-11 w-full text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
@@ -196,14 +204,6 @@ const Sidebar = ({ onNavigate = () => {} }) => {
                     Manage Customers
                   </Link>
                 </li>
-                <li>
-                    <Link
-                      href="/admin/customers/customerForm"
-                      className="flex items-center p-2 pl-11 w-full text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
-                    >
-                      Add Customer
-                    </Link>
-                  </li>
                 {/* <li>
                     <Link
                       href="/admin/customers/customerList"

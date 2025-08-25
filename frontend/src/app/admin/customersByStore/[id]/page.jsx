@@ -125,8 +125,10 @@ const CustomersByStore = () => {
         if (sortConfig.key === "Customer_Date") {
           const dateA = new Date(a.Customer_Date).getTime();
           const dateB = new Date(b.Customer_Date).getTime();
-          if (dateA < dateB) return sortConfig.direction === "ascending" ? -1 : 1;
-          if (dateA > dateB) return sortConfig.direction === "ascending" ? 1 : -1;
+          if (dateA < dateB)
+            return sortConfig.direction === "ascending" ? -1 : 1;
+          if (dateA > dateB)
+            return sortConfig.direction === "ascending" ? 1 : -1;
           return 0;
         }
 
@@ -145,7 +147,9 @@ const CustomersByStore = () => {
 
         // Handle numeric sorting
         if (typeof aValue === "number" && typeof bValue === "number") {
-          return sortConfig.direction === "ascending" ? aValue - bValue : bValue - aValue;
+          return sortConfig.direction === "ascending"
+            ? aValue - bValue
+            : bValue - aValue;
         }
 
         return 0;
@@ -190,10 +194,15 @@ const CustomersByStore = () => {
   };
 
   // 🔹 Pagination logic
-  const totalPages = Math.ceil(filteredAndSortedCustomers.length / customersPerPage);
+  const totalPages = Math.ceil(
+    filteredAndSortedCustomers.length / customersPerPage
+  );
   const indexOfLast = currentPage * customersPerPage;
   const indexOfFirst = indexOfLast - customersPerPage;
-  const currentCustomers = filteredAndSortedCustomers.slice(indexOfFirst, indexOfLast);
+  const currentCustomers = filteredAndSortedCustomers.slice(
+    indexOfFirst,
+    indexOfLast
+  );
 
   const handlePageChange = (page) => {
     if (page >= 1 && page <= totalPages) {
@@ -217,18 +226,28 @@ const CustomersByStore = () => {
     if (customerToDeleteId === null) return;
 
     try {
-      const response = await axios.delete(
-        `${process.env.NEXT_PUBLIC_SERVICES_URL}/DeleteCustomer?id=${customerToDeleteId}`
+      const payload = { CustomerID: customerToDeleteId, ActionMode: "DELETE" };
+
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_SERVICES_URL}/DeleteCustomerNew`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
       );
 
-      if (response.status !== 200) {
-        throw new Error("Failed to delete customer.");
-      }
+      if (!res.ok) throw new Error(`Failed to delete. Status ${res.status}`);
 
-      setCustomers(
-        customers.filter((item) => item.CustomerID !== customerToDeleteId)
-      );
-      toast.success("Customer deleted successfully!");
+      const result = await res.json();
+      const apiMsg = result?.[0]?.message || "Customer deleted successfully!";
+      const status = result?.[0]?.status;
+
+      // Show whatever the API returns
+      toast.success(apiMsg);
+
+      // Refresh the list for this store so pagination/filters stay correct
+      await fetchCustomers(id);
     } catch (error) {
       console.error("Error deleting customer:", error);
       toast.error("An error occurred during deletion.");
@@ -576,17 +595,23 @@ const CustomersByStore = () => {
                                 if (!dateStr) return "N/A";
 
                                 const date = new Date(dateStr);
-                                const formattedDate = date.toLocaleDateString("en-US", {
-                                  weekday: "short",
-                                  day: "2-digit",
-                                  month: "short",
-                                  year: "numeric",
-                                });
-                                const formattedTime = date.toLocaleTimeString("en-US", {
-                                  hour: "numeric",
-                                  minute: "2-digit",
-                                  hour12: true,
-                                });
+                                const formattedDate = date.toLocaleDateString(
+                                  "en-US",
+                                  {
+                                    weekday: "short",
+                                    day: "2-digit",
+                                    month: "short",
+                                    year: "numeric",
+                                  }
+                                );
+                                const formattedTime = date.toLocaleTimeString(
+                                  "en-US",
+                                  {
+                                    hour: "numeric",
+                                    minute: "2-digit",
+                                    hour12: true,
+                                  }
+                                );
 
                                 return (
                                   <div className="flex flex-col">
