@@ -168,7 +168,7 @@ export default function CustomerFormForRandomStore() {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-2xl sm:text-3xl font-extrabold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-            Add Customer To Admin's Store
+            Add Customer
           </h1>
           <p className="text-gray-500 mt-1">
             Add New Customer with all required information
