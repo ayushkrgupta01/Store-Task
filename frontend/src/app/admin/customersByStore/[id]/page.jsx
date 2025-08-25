@@ -11,6 +11,11 @@ import {
   FaEye,
   FaEdit,
   FaTrash,
+  FaCalendar,
+  FaTimesCircle,
+  FaSort,
+  FaSortUp,
+  FaSortDown,
 } from "react-icons/fa";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -31,9 +36,18 @@ const CustomersByStore = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const customersPerPage = 10;
 
+  // 🆕 New state for filtering and sorting
+  const [dateFilter, setDateFilter] = useState("all");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [sortConfig, setSortConfig] = useState({
+    key: null,
+    direction: "ascending",
+  });
+
   // 🔹 Fetch customers for the store
   const fetchCustomers = async (storeId) => {
-    if (!storeId) return; // Prevent fetching if id is not available
+    if (!storeId) return;
     try {
       setLoading(true);
       const res = await axios.get(
@@ -62,35 +76,124 @@ const CustomersByStore = () => {
     }
   }, [id]);
 
-  // 🔹 Filter customers by query
-  // This memoizes the filtered list to prevent unnecessary re-renders.
-  const filteredCustomers = React.useMemo(() => {
-    if (!query.trim()) {
-      return customers;
+  // 🔹 Combined Filtering and Sorting Logic
+  const filteredAndSortedCustomers = React.useMemo(() => {
+    // 1. Filter customers
+    let filtered = customers.filter((customer) => {
+      const q = query.trim().toLowerCase();
+      const customerDate = new Date(customer.Customer_Date);
+      let dateMatch = true;
+
+      // Date filtering logic
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      if (dateFilter === "today") {
+        const customerDay = new Date(customerDate);
+        customerDay.setHours(0, 0, 0, 0);
+        dateMatch = customerDay.getTime() === today.getTime();
+      } else if (dateFilter === "last10days") {
+        const tenDaysAgo = new Date();
+        tenDaysAgo.setDate(today.getDate() - 10);
+        dateMatch = customerDate >= tenDaysAgo && customerDate <= today;
+      } else if (dateFilter === "custom") {
+        if (startDate && endDate) {
+          const start = new Date(startDate);
+          const end = new Date(endDate);
+          end.setHours(23, 59, 59, 999);
+          dateMatch = customerDate >= start && customerDate <= end;
+        } else {
+          dateMatch = false;
+        }
+      }
+
+      // Text search logic
+      const textMatch =
+        !q ||
+        Object.values(customer).some((value) =>
+          String(value).toLowerCase().includes(q)
+        );
+
+      return dateMatch && textMatch;
+    });
+
+    // 2. Sort the filtered customers
+    let sortableItems = [...filtered];
+    if (sortConfig.key !== null) {
+      sortableItems.sort((a, b) => {
+        // Handle date sorting
+        if (sortConfig.key === "Customer_Date") {
+          const dateA = new Date(a.Customer_Date).getTime();
+          const dateB = new Date(b.Customer_Date).getTime();
+          if (dateA < dateB) return sortConfig.direction === "ascending" ? -1 : 1;
+          if (dateA > dateB) return sortConfig.direction === "ascending" ? 1 : -1;
+          return 0;
+        }
+
+        const aValue = a[sortConfig.key];
+        const bValue = b[sortConfig.key];
+
+        // Handle string sorting (case-insensitive)
+        if (typeof aValue === "string" && typeof bValue === "string") {
+          if (aValue.toLowerCase() < bValue.toLowerCase()) {
+            return sortConfig.direction === "ascending" ? -1 : 1;
+          }
+          if (aValue.toLowerCase() > bValue.toLowerCase()) {
+            return sortConfig.direction === "ascending" ? 1 : -1;
+          }
+        }
+
+        // Handle numeric sorting
+        if (typeof aValue === "number" && typeof bValue === "number") {
+          return sortConfig.direction === "ascending" ? aValue - bValue : bValue - aValue;
+        }
+
+        return 0;
+      });
     }
-    const q = query.trim().toLowerCase();
-    return customers.filter(
-      (customer) =>
-        String(customer.Customer_Name || "")
-          .toLowerCase()
-          .includes(q) ||
-        String(customer.Customer_Email || "")
-          .toLowerCase()
-          .includes(q) ||
-        String(customer.Customer_phone || "")
-          .toLowerCase()
-          .includes(q) ||
-        String(customer.service_name || "")
-          .toLowerCase()
-          .includes(q)
-    );
-  }, [customers, query]);
+
+    return sortableItems;
+  }, [customers, query, dateFilter, startDate, endDate, sortConfig]);
+
+  // 🆕 New sorting functions
+  const requestSort = (key) => {
+    let direction = "ascending";
+    if (sortConfig.key === key && sortConfig.direction === "ascending") {
+      direction = "descending";
+    }
+    setSortConfig({ key, direction });
+    setCurrentPage(1); // Reset page on sort change
+  };
+
+  const getSortIcon = (key) => {
+    if (sortConfig.key !== key) {
+      return <FaSort className="ml-2 text-gray-400" />;
+    }
+    if (sortConfig.direction === "ascending") {
+      return <FaSortUp className="ml-2 text-indigo-600" />;
+    }
+    return <FaSortDown className="ml-2 text-indigo-600" />;
+  };
+
+  const handleFilterChange = (filter) => {
+    setDateFilter(filter);
+    setCurrentPage(1);
+  };
+
+  const handleResetFilters = () => {
+    setQuery("");
+    setDateFilter("all");
+    setStartDate("");
+    setEndDate("");
+    setSortConfig({ key: null, direction: "ascending" });
+    setCurrentPage(1);
+  };
 
   // 🔹 Pagination logic
-  const totalPages = Math.ceil(filteredCustomers.length / customersPerPage);
+  const totalPages = Math.ceil(filteredAndSortedCustomers.length / customersPerPage);
   const indexOfLast = currentPage * customersPerPage;
   const indexOfFirst = indexOfLast - customersPerPage;
-  const currentCustomers = filteredCustomers.slice(indexOfFirst, indexOfLast);
+  const currentCustomers = filteredAndSortedCustomers.slice(indexOfFirst, indexOfLast);
 
   const handlePageChange = (page) => {
     if (page >= 1 && page <= totalPages) {
@@ -103,7 +206,7 @@ const CustomersByStore = () => {
   const handleUpdate = (customerId) =>
     router.push(`/admin/customers/editCustomer/${customerId}`);
   const handleAddCustomer = () =>
-    router.push(`/admin/customers/addCustomer/${id}`);
+    router.push(`/admin/customers/customerForm`);
 
   const handleDeleteInitiate = (customerId) => {
     setCustomerToDeleteId(customerId);
@@ -122,7 +225,6 @@ const CustomersByStore = () => {
         throw new Error("Failed to delete customer.");
       }
 
-      // Update the customers list locally
       setCustomers(
         customers.filter((item) => item.CustomerID !== customerToDeleteId)
       );
@@ -143,12 +245,14 @@ const CustomersByStore = () => {
 
   // Export to Excel function
   const exportToExcel = () => {
-    const dataToExport = filteredCustomers.map((customer) => ({
+    const dataToExport = filteredAndSortedCustomers.map((customer) => ({
       "Customer ID": customer.CustomerID,
       "Customer Name": customer.Customer_Name,
       Email: customer.Customer_Email,
       Phone: customer.Customer_phone,
       "Service Name": customer.service_name,
+      "Date & Time": new Date(customer.Customer_Date).toLocaleString(),
+      Amount: customer.Customer_productamount,
     }));
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);
     const workbook = XLSX.utils.book_new();
@@ -172,14 +276,14 @@ const CustomersByStore = () => {
       "Service",
       "Amount",
     ];
-    const tableRows = filteredCustomers.map((customer) => [
+    const tableRows = filteredAndSortedCustomers.map((customer) => [
       customer.CustomerID,
-      customer.StoreID,
+      customer.GeneratedStoreID,
       customer.StoreName,
       customer.Customer_Name,
       customer.Customer_Email,
       customer.Customer_phone,
-      customer.Customer_Date,
+      new Date(customer.Customer_Date).toLocaleString(),
       customer.service_name,
       customer.Customer_productamount,
     ]);
@@ -229,50 +333,130 @@ const CustomersByStore = () => {
           </p>
         </div>
 
-        {/* Controls */}
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mb-6">
-          <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
-            <div className="relative flex-1">
+        {/* Control and Filter Section */}
+        <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-center">
+            {/* Search Input */}
+            <div className="relative md:col-span-2 lg:col-span-4">
               <input
                 value={query}
                 onChange={(e) => {
                   setQuery(e.target.value);
-                  setCurrentPage(1); // Reset to first page on search
+                  setCurrentPage(1);
                 }}
-                placeholder="Search customers..."
-                className="w-full border border-gray-300 rounded-lg px-4 py-2 pl-10 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                placeholder="Search by any field (Name, Email, Phone...)"
+                className="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300"
               />
               <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             </div>
-            <div className="flex gap-2">
+
+            {/* Date Filter Buttons */}
+            <div className="md:col-span-2 lg:col-span-2 flex flex-wrap gap-2 overflow-x-auto pb-2">
+              <span className="flex items-center text-gray-600 font-medium">
+                <FaCalendar className="mr-2" /> Date Filter:
+              </span>
               <button
-                onClick={() => fetchCustomers(id)}
-                disabled={loading}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors disabled:opacity-50"
+                onClick={() => handleFilterChange("all")}
+                className={`flex-shrink-0 px-4 py-2 rounded-lg transition-colors ${
+                  dateFilter === "all"
+                    ? "bg-indigo-600 text-white shadow-md"
+                    : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                }`}
               >
-                <FaSpinner className={`${loading ? "animate-spin" : ""}`} />
-                Refresh
+                All
               </button>
               <button
-                onClick={handleAddCustomer}
-                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+                onClick={() => handleFilterChange("today")}
+                className={`flex-shrink-0 px-4 py-2 rounded-lg transition-colors ${
+                  dateFilter === "today"
+                    ? "bg-indigo-600 text-white shadow-md"
+                    : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                }`}
               >
-                <FaPlus />
-                Add Customer
+                Today
+              </button>
+              <button
+                onClick={() => handleFilterChange("last10days")}
+                className={`flex-shrink-0 px-4 py-2 rounded-lg transition-colors ${
+                  dateFilter === "last10days"
+                    ? "bg-indigo-600 text-white shadow-md"
+                    : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                }`}
+              >
+                Last 10 Days
+              </button>
+              <button
+                onClick={() => handleFilterChange("custom")}
+                className={`flex-shrink-0 px-4 py-2 rounded-lg transition-colors ${
+                  dateFilter === "custom"
+                    ? "bg-indigo-600 text-white shadow-md"
+                    : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                }`}
+              >
+                Custom Range
               </button>
             </div>
+
+            {/* Custom Date Range Inputs (conditionally rendered) */}
+            {dateFilter === "custom" && (
+              <div className="flex flex-col sm:flex-row gap-4 lg:col-span-2 transition-all duration-300 ease-in-out">
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => {
+                    setStartDate(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="flex-1 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  placeholder="Start Date"
+                />
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => {
+                    setEndDate(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="flex-1 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  placeholder="End Date"
+                />
+              </div>
+            )}
           </div>
-          {/* New Export Buttons */}
-          <div className="flex justify-end gap-2 w-full lg:w-auto mt-4 lg:mt-0">
+
+          {/* Action buttons */}
+          <div className="flex flex-wrap justify-end gap-2 w-full mt-4 border-t pt-4">
+            <button
+              onClick={handleResetFilters}
+              className="flex-1 lg:flex-none bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2 transition-colors"
+            >
+              <FaTimesCircle />
+              Reset Filters
+            </button>
+            <button
+              onClick={() => fetchCustomers(id)}
+              disabled={loading}
+              className="flex-1 lg:flex-none bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+            >
+              <FaSpinner className={`${loading ? "animate-spin" : ""}`} />
+              Refresh
+            </button>
+            <button
+              onClick={handleAddCustomer}
+              className="flex-1 lg:flex-none bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2 transition-colors"
+            >
+              <FaPlus />
+              Add Customer
+            </button>
             <button
               onClick={exportToPDF}
-              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors"
+              className="flex-1 lg:flex-none bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors"
             >
               Download PDF
             </button>
             <button
               onClick={exportToExcel}
-              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors"
+              className="flex-1 lg:flex-none bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors"
             >
               Export to Excel
             </button>
@@ -299,15 +483,78 @@ const CustomersByStore = () => {
                   <table className="w-full border-collapse">
                     <thead>
                       <tr className="text-left text-xs uppercase tracking-wide text-gray-600">
-                        <th className="p-3 bg-gray-50">Customer ID</th>
-                        <th className="p-3 bg-gray-50">Store ID</th>
-                        <th className="p-3 bg-gray-50">Store Name</th>
-                        <th className="p-3 bg-gray-50">Customer Name</th>
-                        <th className="p-3 bg-gray-50">Email</th>
-                        <th className="p-3 bg-gray-50">Phone</th>
-                        <th className="p-3 bg-gray-50">Date & Time</th>
-                        <th className="p-3 bg-gray-50">Service</th>
-                        <th className="p-3 bg-gray-50">Amount</th>
+                        <th
+                          className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0 cursor-pointer hover:bg-gray-200 transition-colors"
+                          onClick={() => requestSort("CustomerID")}
+                        >
+                          <div className="flex items-center">
+                            Customer ID
+                            {getSortIcon("CustomerID")}
+                          </div>
+                        </th>
+                        <th
+                          className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0 cursor-pointer hover:bg-gray-200 transition-colors"
+                          onClick={() => requestSort("StoreName")}
+                        >
+                          <div className="flex items-center">
+                            Store Name
+                            {getSortIcon("StoreName")}
+                          </div>
+                        </th>
+                        <th
+                          className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0 cursor-pointer hover:bg-gray-200 transition-colors"
+                          onClick={() => requestSort("Customer_Name")}
+                        >
+                          <div className="flex items-center">
+                            Customer Name
+                            {getSortIcon("Customer_Name")}
+                          </div>
+                        </th>
+                        <th
+                          className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0 cursor-pointer hover:bg-gray-200 transition-colors"
+                          onClick={() => requestSort("Customer_Email")}
+                        >
+                          <div className="flex items-center">
+                            Email
+                            {getSortIcon("Customer_Email")}
+                          </div>
+                        </th>
+                        <th
+                          className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0 cursor-pointer hover:bg-gray-200 transition-colors"
+                          onClick={() => requestSort("Customer_phone")}
+                        >
+                          <div className="flex items-center">
+                            Phone
+                            {getSortIcon("Customer_phone")}
+                          </div>
+                        </th>
+                        <th
+                          className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0 cursor-pointer hover:bg-gray-200 transition-colors"
+                          onClick={() => requestSort("Customer_Date")}
+                        >
+                          <div className="flex items-center">
+                            Date & Time
+                            {getSortIcon("Customer_Date")}
+                          </div>
+                        </th>
+                        <th
+                          className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0 cursor-pointer hover:bg-gray-200 transition-colors"
+                          onClick={() => requestSort("service_name")}
+                        >
+                          <div className="flex items-center">
+                            Service
+                            {getSortIcon("service_name")}
+                          </div>
+                        </th>
+                        <th
+                          className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0 cursor-pointer hover:bg-gray-200 transition-colors"
+                          onClick={() => requestSort("Customer_productamount")}
+                        >
+                          <div className="flex items-center">
+                            Amount
+                            {getSortIcon("Customer_productamount")}
+                          </div>
+                        </th>
                         <th className="p-3 bg-gray-50 text-center">Actions</th>
                       </tr>
                     </thead>
@@ -319,12 +566,38 @@ const CustomersByStore = () => {
                             className="hover:bg-gray-50 text-sm border-t"
                           >
                             <td className="p-3">{customer.CustomerID}</td>
-                            <td className="p-3">{customer.StoreID}</td>
                             <td className="p-3">{customer.StoreName}</td>
                             <td className="p-3">{customer.Customer_Name}</td>
                             <td className="p-3">{customer.Customer_Email}</td>
                             <td className="p-3">{customer.Customer_phone}</td>
-                            <td className="p-3">{customer.Customer_Date}</td>
+                            <td className="p-3">
+                              {(() => {
+                                const dateStr = customer.Customer_Date;
+                                if (!dateStr) return "N/A";
+
+                                const date = new Date(dateStr);
+                                const formattedDate = date.toLocaleDateString("en-US", {
+                                  weekday: "short",
+                                  day: "2-digit",
+                                  month: "short",
+                                  year: "numeric",
+                                });
+                                const formattedTime = date.toLocaleTimeString("en-US", {
+                                  hour: "numeric",
+                                  minute: "2-digit",
+                                  hour12: true,
+                                });
+
+                                return (
+                                  <div className="flex flex-col">
+                                    <span>{formattedDate}</span>
+                                    <span className="text-gray-500">
+                                      {formattedTime}
+                                    </span>
+                                  </div>
+                                );
+                              })()}
+                            </td>
                             <td className="p-3">{customer.service_name}</td>
                             <td className="p-3">
                               {customer.Customer_productamount}
@@ -362,7 +635,7 @@ const CustomersByStore = () => {
                       ) : (
                         <tr>
                           <td
-                            colSpan={6}
+                            colSpan={9}
                             className="p-8 text-center text-gray-500 border-t"
                           >
                             <div className="flex flex-col items-center gap-2">
