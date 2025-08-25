@@ -2,7 +2,16 @@
 
 import React, { useState } from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
-import { FaUserShield, FaLock, FaEye, FaEyeSlash, FaSpinner, FaStore, FaUsers, FaChartLine } from "react-icons/fa";
+import {
+  FaUserShield,
+  FaLock,
+  FaEye,
+  FaEyeSlash,
+  FaSpinner,
+  FaStore,
+  FaUsers,
+  FaChartLine,
+} from "react-icons/fa";
 import * as Yup from "yup";
 import axios from "axios";
 import { useRouter } from "next/navigation";
@@ -16,14 +25,14 @@ const AdminLoginForm = () => {
   const { login, isAuthenticated, loading } = useAdminAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   // Redirect if already logged in
   React.useEffect(() => {
     if (!loading && isAuthenticated) {
       router.push("/admin");
     }
   }, [isAuthenticated, loading, router]);
-  
+
   const initialValues = {
     adminId: "",
     password: "",
@@ -58,46 +67,68 @@ const AdminLoginForm = () => {
         data.length > 0 &&
         data[0].StatusCode === "1"
       ) {
-        // Login successful
+        // ✅ Parse EmployeeDetails correctly
+      let storeId = null;
+try {
+  let employeeDetails = data[0].EmployeeDetails;
+
+  // 👇 First parse once
+  if (typeof employeeDetails === "string") {
+    employeeDetails = JSON.parse(employeeDetails);
+  }
+
+  // 👇 If still stringified (SQL sometimes double-encodes FOR JSON PATH)
+  if (typeof employeeDetails === "string") {
+    employeeDetails = JSON.parse(employeeDetails);
+  }
+
+  if (Array.isArray(employeeDetails) && employeeDetails.length > 0) {
+    storeId = employeeDetails[0].StoreID ?? null;
+  }
+} catch (err) {
+  console.error("Error parsing EmployeeDetails:", err);
+}
+
+
+        // ✅ Save username + StoreID + loginTime
         const adminInfo = {
           username: values.adminId,
+          storeId,
           loginTime: new Date().toISOString(),
         };
-        const token = `admin_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        
+
+        const token = `admin_${Date.now()}_${Math.random()
+          .toString(36)
+          .substr(2, 9)}`;
+
         login(adminInfo, token);
+
         toast.success("Login successful! Redirecting to dashboard...", {
           position: "top-right",
           autoClose: 2000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
         });
-        
+
         setTimeout(() => {
           router.push("/admin");
         }, 2000);
       } else {
-        toast.error(data[0]?.msg || "Login failed. Please check your credentials.", {
-          position: "top-right",
-          autoClose: 4000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-        });
+        toast.error(
+          data[0]?.msg || "Login failed. Please check your credentials.",
+          {
+            position: "top-right",
+            autoClose: 4000,
+          }
+        );
       }
     } catch (error) {
       console.error("Login error:", error);
-      toast.error("Network error. Please check your connection and try again.", {
-        position: "top-right",
-        autoClose: 4000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-      });
+      toast.error(
+        "Network error. Please check your connection and try again.",
+        {
+          position: "top-right",
+          autoClose: 4000,
+        }
+      );
     } finally {
       setIsSubmitting(false);
       setSubmitting(false);
@@ -118,8 +149,14 @@ const AdminLoginForm = () => {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center h-16">
               <div className="flex items-center">
-                <img src="/LogoLight.jpeg" alt="Logo" className="my-auto rounded-full size-16" />
-                <span className="ml-3 text-sm md:text-xl font-sans font-bold text-gray-700">Store Management System</span>
+                <img
+                  src="/LogoLight.jpeg"
+                  alt="Logo"
+                  className="my-auto rounded-full size-16"
+                />
+                <span className="ml-3 text-sm md:text-xl font-sans font-bold text-gray-700">
+                  Store Management System
+                </span>
               </div>
               <div className="text-xs font-bold text-gray-600">
                 Admin Portal
@@ -138,14 +175,18 @@ const AdminLoginForm = () => {
                 {/* Logo and Header */}
                 <div className="text-center mb-8 z-10">
                   <div className="relative mb-6">
-                    <img 
-                      src="/LogoLight.jpeg" 
-                      alt="Logo" 
+                    <img
+                      src="/LogoLight.jpeg"
+                      alt="Logo"
                       className="size-32 mx-auto rounded-full shadow-lg border-4 border-white"
                     />
                   </div>
-                  <h1 className="text-3xl font-bold text-gray-800 mb-2">Admin Login</h1>
-                  <p className="text-gray-600">Welcome back! Please sign in to your account.</p>
+                  <h1 className="text-3xl font-bold text-gray-800 mb-2">
+                    Admin Login
+                  </h1>
+                  <p className="text-gray-600">
+                    Welcome back! Please sign in to your account.
+                  </p>
                 </div>
 
                 {/* Form */}
@@ -158,7 +199,10 @@ const AdminLoginForm = () => {
                     <Form className="space-y-6">
                       {/* Admin ID Field */}
                       <div className="space-y-2">
-                        <label htmlFor="adminId" className="block text-sm font-medium text-gray-700">
+                        <label
+                          htmlFor="adminId"
+                          className="block text-sm font-medium text-gray-700"
+                        >
                           Admin ID
                         </label>
                         <div className="relative">
@@ -184,7 +228,10 @@ const AdminLoginForm = () => {
 
                       {/* Password Field */}
                       <div className="space-y-2">
-                        <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                        <label
+                          htmlFor="password"
+                          className="block text-sm font-medium text-gray-700"
+                        >
                           Password
                         </label>
                         <div className="relative">
@@ -205,7 +252,11 @@ const AdminLoginForm = () => {
                             onClick={() => setShowPassword(!showPassword)}
                             className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                           >
-                            {showPassword ? <FaEyeSlash className="text-lg" /> : <FaEye className="text-lg" />}
+                            {showPassword ? (
+                              <FaEyeSlash className="text-lg" />
+                            ) : (
+                              <FaEye className="text-lg" />
+                            )}
                           </button>
                         </div>
                         <ErrorMessage
@@ -241,7 +292,8 @@ const AdminLoginForm = () => {
                 {/* Footer */}
                 <div className="mt-8 text-center">
                   <p className="text-sm text-gray-500">
-                    Copyright © 2025 Micron Conclusion Services Pvt. Ltd. All Rights Reserved.
+                    Copyright © 2025 Micron Conclusion Services Pvt. Ltd. All
+                    Rights Reserved.
                   </p>
                 </div>
               </div>
@@ -258,8 +310,9 @@ const AdminLoginForm = () => {
                     </span>
                   </h2>
                   <p className="text-xl text-gray-600 mb-8">
-                    Streamline your business operations with our comprehensive store management system. 
-                    Manage stores, customers, and analytics all in one place.
+                    Streamline your business operations with our comprehensive
+                    store management system. Manage stores, customers, and
+                    analytics all in one place.
                   </p>
                 </div>
 
@@ -271,8 +324,13 @@ const AdminLoginForm = () => {
                         <FaStore className="text-xl text-indigo-600" />
                       </div>
                       <div>
-                        <h3 className="text-lg font-semibold text-gray-800">Store Management</h3>
-                        <p className="text-gray-600">Efficiently manage multiple stores with comprehensive tools</p>
+                        <h3 className="text-lg font-semibold text-gray-800">
+                          Store Management
+                        </h3>
+                        <p className="text-gray-600">
+                          Efficiently manage multiple stores with comprehensive
+                          tools
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -283,8 +341,12 @@ const AdminLoginForm = () => {
                         <FaUsers className="text-xl text-purple-600" />
                       </div>
                       <div>
-                        <h3 className="text-lg font-semibold text-gray-800">Customer Management</h3>
-                        <p className="text-gray-600">Build strong relationships with your customers</p>
+                        <h3 className="text-lg font-semibold text-gray-800">
+                          Customer Management
+                        </h3>
+                        <p className="text-gray-600">
+                          Build strong relationships with your customers
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -295,8 +357,12 @@ const AdminLoginForm = () => {
                         <FaChartLine className="text-xl text-green-600" />
                       </div>
                       <div>
-                        <h3 className="text-lg font-semibold text-gray-800">Analytics & Reports</h3>
-                        <p className="text-gray-600">Make data-driven decisions with comprehensive insights</p>
+                        <h3 className="text-lg font-semibold text-gray-800">
+                          Analytics & Reports
+                        </h3>
+                        <p className="text-gray-600">
+                          Make data-driven decisions with comprehensive insights
+                        </p>
                       </div>
                     </div>
                   </div>

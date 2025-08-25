@@ -115,17 +115,30 @@ export default function CustomerForm() {
   };
 
   // Formik submit handler
+  // Formik submit handler
   const handleSubmit = async (values, { setSubmitting, resetForm }) => {
     if (!aadharFileName || !panFileName) {
       toast.error("Please upload both Aadhar and PAN images.");
       setSubmitting(false);
       return;
     }
+
+    // 🔹 Get StoreID from localStorage
+    let storeId = null;
+    try {
+      const adminInfo = JSON.parse(localStorage.getItem("adminInfo"));
+      storeId = adminInfo?.storeId || null;
+    } catch (err) {
+      console.error("Error reading storeId from localStorage:", err);
+    }
+
     const payload = {
       ...values,
       customer_aadhar: aadharFileName,
       customer_pancard: panFileName,
+      storeId: storeId, // ✅ Add storeId to backend payload
     };
+
     try {
       const response = await axios.post(
         `${BACKEND_BASE_URL}/CreateCustomer`,
