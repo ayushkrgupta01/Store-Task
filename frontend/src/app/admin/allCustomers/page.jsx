@@ -11,6 +11,9 @@ import {
   FaArrowLeft,
   FaCalendar,
   FaTimesCircle,
+  FaSort,
+  FaSortUp,
+  FaSortDown,
 } from "react-icons/fa";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -28,6 +31,21 @@ const AllCustomers = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const customersPerPage = 10;
   const router = useRouter();
+
+  // New sorting state
+  const [sortConfig, setSortConfig] = useState({
+    key: null,
+    direction: "ascending",
+  });
+
+  // New sorting function
+  const requestSort = (key) => {
+    let direction = "ascending";
+    if (sortConfig.key === key && sortConfig.direction === "ascending") {
+      direction = "descending";
+    }
+    setSortConfig({ key, direction });
+  };
 
   const allCustomers = async () => {
     setLoading(true);
@@ -70,14 +88,14 @@ const AllCustomers = () => {
       if (startDate && endDate) {
         const start = new Date(startDate);
         const end = new Date(endDate);
-        end.setHours(23, 59, 59, 999); // Include the whole end day
+        end.setHours(23, 59, 59, 999);
         dateMatch = customerDate >= start && customerDate <= end;
       } else {
-        dateMatch = false; // No range selected, so no match
+        dateMatch = false;
       }
     }
 
-    // --- Text search logic (Updated to include all columns) ---
+    // --- Text search logic ---
     const textMatch =
       !q ||
       Object.values(customer).some((value) =>
@@ -87,6 +105,53 @@ const AllCustomers = () => {
     return dateMatch && textMatch;
   });
 
+  // --- Sorting logic ---
+  const sortedCustomers = React.useMemo(() => {
+    let sortableItems = [...filtered];
+    if (sortConfig.key !== null) {
+      sortableItems.sort((a, b) => {
+        // Special case for 'Date & Time' column
+        if (sortConfig.key === "Customer_Date") {
+          const dateA = new Date(a.Customer_Date).getTime();
+          const dateB = new Date(b.Customer_Date).getTime();
+          if (dateA < dateB) {
+            return sortConfig.direction === "ascending" ? -1 : 1;
+          }
+          if (dateA > dateB) {
+            return sortConfig.direction === "ascending" ? 1 : -1;
+          }
+          return 0;
+        }
+
+        const aValue = a[sortConfig.key];
+        const bValue = b[sortConfig.key];
+
+        if (typeof aValue === "string" && typeof bValue === "string") {
+          if (aValue.toLowerCase() < bValue.toLowerCase()) {
+            return sortConfig.direction === "ascending" ? -1 : 1;
+          }
+          if (aValue.toLowerCase() > bValue.toLowerCase()) {
+            return sortConfig.direction === "ascending" ? 1 : -1;
+          }
+        }
+
+        if (typeof aValue === "number" && typeof bValue === "number") {
+          return sortConfig.direction === "ascending"
+            ? aValue - bValue
+            : bValue - aValue;
+        }
+
+        return 0;
+      });
+    }
+    return sortableItems;
+  }, [filtered, sortConfig]);
+
+  // 📌 Pagination logic
+  const totalPages = Math.ceil(sortedCustomers.length / customersPerPage);
+  const indexOfLast = currentPage * customersPerPage;
+  const indexOfFirst = indexOfLast - customersPerPage;
+  const currentCustomers = sortedCustomers.slice(indexOfFirst, indexOfLast);
   // Export to Excel function
   const exportToExcel = () => {
     const dataToExport = filtered.map((customer) => ({
@@ -160,11 +225,16 @@ const AllCustomers = () => {
     doc.save("all_customers_data.pdf");
   };
 
-  // 📌 Pagination logic
-  const totalPages = Math.ceil(filtered.length / customersPerPage);
-  const indexOfLast = currentPage * customersPerPage;
-  const indexOfFirst = indexOfLast - customersPerPage;
-  const currentCustomers = filtered.slice(indexOfFirst, indexOfLast);
+  // Helper function to get the correct sorting icon
+  const getSortIcon = (key) => {
+    if (sortConfig.key !== key) {
+      return <FaSort className="ml-2 text-gray-400" />;
+    }
+    if (sortConfig.direction === "ascending") {
+      return <FaSortUp className="ml-2 text-indigo-600" />;
+    }
+    return <FaSortDown className="ml-2 text-indigo-600" />;
+  };
 
   const handlePageChange = (page) => {
     if (page >= 1 && page <= totalPages) {
@@ -358,32 +428,86 @@ const AllCustomers = () => {
                   <table className="w-full border-collapse">
                     <thead>
                       <tr className="text-left text-xs uppercase tracking-wide text-gray-600">
-                        <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
-                          Customer ID
+                        <th
+                          className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0 cursor-pointer hover:bg-gray-200 transition-colors"
+                          onClick={() => requestSort("CustomerID")}
+                        >
+                          <div className="flex items-center">
+                            Customer ID
+                            {getSortIcon("CustomerID")}
+                          </div>
                         </th>
-                        <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
-                          Store ID
+                        <th
+                          className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0 cursor-pointer hover:bg-gray-200 transition-colors"
+                          onClick={() => requestSort("GeneratedStoreID")}
+                        >
+                          <div className="flex items-center">
+                            Store ID
+                            {getSortIcon("GeneratedStoreID")}
+                          </div>
                         </th>
-                        <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
-                          Store Name
+                        <th
+                          className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0 cursor-pointer hover:bg-gray-200 transition-colors"
+                          onClick={() => requestSort("StoreName")}
+                        >
+                          <div className="flex items-center">
+                            Store Name
+                            {getSortIcon("StoreName")}
+                          </div>
                         </th>
-                        <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
-                          Customer Name
+                        <th
+                          className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0 cursor-pointer hover:bg-gray-200 transition-colors"
+                          onClick={() => requestSort("Customer_Name")}
+                        >
+                          <div className="flex items-center">
+                            Customer Name
+                            {getSortIcon("Customer_Name")}
+                          </div>
                         </th>
-                        <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
-                          Email
+                        <th
+                          className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0 cursor-pointer hover:bg-gray-200 transition-colors"
+                          onClick={() => requestSort("Customer_Email")}
+                        >
+                          <div className="flex items-center">
+                            Email
+                            {getSortIcon("Customer_Email")}
+                          </div>
                         </th>
-                        <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
-                          Phone
+                        <th
+                          className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0 cursor-pointer hover:bg-gray-200 transition-colors"
+                          onClick={() => requestSort("Customer_Phone")}
+                        >
+                          <div className="flex items-center">
+                            Phone
+                            {getSortIcon("Customer_Phone")}
+                          </div>
                         </th>
-                        <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
-                          Date & Time
+                        <th
+                          className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0 cursor-pointer hover:bg-gray-200 transition-colors"
+                          onClick={() => requestSort("Customer_Date")}
+                        >
+                          <div className="flex items-center">
+                            Date & Time
+                            {getSortIcon("Customer_Date")}
+                          </div>
                         </th>
-                        <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
-                          Service
+                        <th
+                          className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0 cursor-pointer hover:bg-gray-200 transition-colors"
+                          onClick={() => requestSort("service_name")}
+                        >
+                          <div className="flex items-center">
+                            Service
+                            {getSortIcon("service_name")}
+                          </div>
                         </th>
-                        <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
-                          Amount
+                        <th
+                          className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0 cursor-pointer hover:bg-gray-200 transition-colors"
+                          onClick={() => requestSort("Customer_ProductAmount")}
+                        >
+                          <div className="flex items-center">
+                            Amount
+                            {getSortIcon("Customer_ProductAmount")}
+                          </div>
                         </th>
                       </tr>
                     </thead>

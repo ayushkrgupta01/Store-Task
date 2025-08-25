@@ -9,6 +9,9 @@ import {
   FaEdit,
   FaTrash,
   FaArrowLeft,
+  FaSort,
+  FaSortUp,
+  FaSortDown,
 } from "react-icons/fa";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -23,8 +26,14 @@ const AllServices = () => {
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const customersPerPage = 10; // 👈 Change this number for page size
+  const customersPerPage = 10;
   const router = useRouter();
+
+  // New sorting state
+  const [sortConfig, setSortConfig] = useState({
+    key: null,
+    direction: "ascending",
+  });
 
   const fetchStores = async () => {
     setLoading(true);
@@ -35,7 +44,7 @@ const AllServices = () => {
       setStores(response.data);
     } catch (error) {
       console.error("Failed to load stores:", error);
-      toast.error("Failed to load store data.");
+      toast.error("Failed to load service data.");
     } finally {
       setLoading(false);
     }
@@ -45,11 +54,61 @@ const AllServices = () => {
     fetchStores();
   }, []);
 
+  // New sorting function
+  const requestSort = (key) => {
+    let direction = "ascending";
+    if (sortConfig.key === key && sortConfig.direction === "ascending") {
+      direction = "descending";
+    }
+    setSortConfig({ key, direction });
+  };
+
+  // Helper function for sort icons
+  const getSortIcon = (key) => {
+    if (sortConfig.key !== key) {
+      return <FaSort className="ml-2 text-gray-400" />;
+    }
+    if (sortConfig.direction === "ascending") {
+      return <FaSortUp className="ml-2 text-indigo-600" />;
+    }
+    return <FaSortDown className="ml-2 text-indigo-600" />;
+  };
+
+  // 🔎 Search logic
   const filtered = stores.filter((store) => {
     const q = query.trim().toLowerCase();
     if (!q) return true;
     return String(store.service_name || "").toLowerCase().includes(q);
   });
+
+  // --- Sorting logic ---
+  const sortedServices = React.useMemo(() => {
+    let sortableItems = [...filtered];
+    if (sortConfig.key !== null) {
+      sortableItems.sort((a, b) => {
+        const aValue = a[sortConfig.key];
+        const bValue = b[sortConfig.key];
+
+        if (typeof aValue === "string" && typeof bValue === "string") {
+          if (aValue.toLowerCase() < bValue.toLowerCase()) {
+            return sortConfig.direction === "ascending" ? -1 : 1;
+          }
+          if (aValue.toLowerCase() > bValue.toLowerCase()) {
+            return sortConfig.direction === "ascending" ? 1 : -1;
+          }
+        }
+
+        if (typeof aValue === "number" && typeof bValue === "number") {
+          return sortConfig.direction === "ascending"
+            ? aValue - bValue
+            : bValue - aValue;
+        }
+
+        return 0;
+      });
+    }
+    return sortableItems;
+  }, [filtered, sortConfig]);
 
   const getValue = (obj, keys) => {
     for (const key of keys) {
@@ -67,7 +126,8 @@ const AllServices = () => {
 
   // Export to Excel function
   const exportToExcel = () => {
-    const dataToExport = filtered.map((store) => ({
+    const dataToExport = sortedServices.map((store, index) => ({
+      "S.No.": index + 1,
       "Service ID": store.service_id,
       "Service Name": store.service_name,
     }));
@@ -82,8 +142,9 @@ const AllServices = () => {
     const doc = new jsPDF();
     doc.text("All Services List", 14, 20);
 
-    const tableColumn = ["ID", "Service Name"];
-    const tableRows = filtered.map((store) => [
+    const tableColumn = ["S.No.", "Service ID", "Service Name"];
+    const tableRows = sortedServices.map((store, index) => [
+      index + 1,
       store.service_id,
       store.service_name,
     ]);
@@ -113,10 +174,10 @@ const AllServices = () => {
   };
 
   // 📌 Pagination logic
-  const totalPages = Math.ceil(filtered.length / customersPerPage);
+  const totalPages = Math.ceil(sortedServices.length / customersPerPage);
   const indexOfLast = currentPage * customersPerPage;
   const indexOfFirst = indexOfLast - customersPerPage;
-  const currentCustomers = filtered.slice(indexOfFirst, indexOfLast);
+  const currentCustomers = sortedServices.slice(indexOfFirst, indexOfLast);
 
   const handlePageChange = (page) => {
     if (page >= 1 && page <= totalPages) {
@@ -151,7 +212,10 @@ const AllServices = () => {
               <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
               <input
                 value={query}
-                onChange={(e) => setQuery(e.target.value)}
+                onChange={(e) => {
+                  setQuery(e.target.value);
+                  setCurrentPage(1); // Reset to page 1 on search
+                }}
                 placeholder="Search services..."
                 className="w-full rounded-full border border-gray-300 pl-12 pr-10 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm transition-all"
               />
@@ -219,7 +283,25 @@ const AllServices = () => {
                   <thead>
                     <tr className="text-left text-xs uppercase tracking-wide text-gray-600">
                       <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
-                        Services Name
+                        S.No.
+                      </th>
+                      {/* <th
+                        className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0 cursor-pointer hover:bg-gray-200 transition-colors"
+                        onClick={() => requestSort("service_id")}
+                      >
+                        <div className="flex items-center">
+                          ID
+                          {getSortIcon("service_id")}
+                        </div>
+                      </th> */}
+                      <th
+                        className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0 cursor-pointer hover:bg-gray-200 transition-colors"
+                        onClick={() => requestSort("service_name")}
+                      >
+                        <div className="flex items-center">
+                          Services Name
+                          {getSortIcon("service_name")}
+                        </div>
                       </th>
                     </tr>
                   </thead>
@@ -227,9 +309,15 @@ const AllServices = () => {
                     {currentCustomers.length > 0 ? (
                       currentCustomers.map((store, index) => (
                         <tr
-                          key={store.StoreId || index}
+                          key={store.service_id || index}
                           className="hover:bg-gray-50 text-sm sm:text-[15px]"
                         >
+                          <td className="p-3 text-sm border-t">
+                            {indexOfFirst + index + 1}
+                          </td>
+                          {/* <td className="p-3 text-sm border-t">
+                            {getValue(store, ["service_id"])}
+                          </td> */}
                           <td className="p-3 text-sm border-t truncate">
                             {getValue(store, ["service_name"])}
                           </td>
@@ -238,12 +326,12 @@ const AllServices = () => {
                     ) : (
                       <tr>
                         <td
-                          colSpan={8}
+                          colSpan={3}
                           className="p-8 text-center text-gray-500 border-t"
                         >
                           <div className="flex flex-col items-center gap-2">
                             <FaStore className="text-4xl text-gray-300" />
-                            <p>No stores found</p>
+                            <p>No services found</p>
                           </div>
                         </td>
                       </tr>

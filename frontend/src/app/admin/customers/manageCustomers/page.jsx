@@ -13,6 +13,9 @@ import {
   FaTrashAlt,
   FaSyncAlt,
   FaCalendarAlt,
+  FaSort, // Main sort icon
+  FaSortUp, // Ascending sort icon
+  FaSortDown, // Descending sort icon
 } from "react-icons/fa";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -30,6 +33,11 @@ export default function manageCustomers() {
     startDate: "",
     endDate: "",
   });
+
+  // ✅ NEW: State for sorting
+  const [sortColumn, setSortColumn] = useState(null);
+  const [sortDirection, setSortDirection] = useState("asc");
+
   const customersPerPage = 10;
   const router = useRouter();
 
@@ -57,6 +65,9 @@ export default function manageCustomers() {
   const handleRefresh = () => {
     setQuery("");
     setDateRange({ startDate: "", endDate: "" });
+    // Reset sorting when refreshing
+    setSortColumn(null);
+    setSortDirection("asc");
     fetchCustomers();
   };
 
@@ -65,7 +76,6 @@ export default function manageCustomers() {
   const updateCustomer = (id) =>
     router.push(`/admin/customers/editCustomer/${id}`);
 
-  // ✅ New function to initiate the delete process
   const handleDeleteInitiate = (customerId) => {
     setCustomerToDeleteId(customerId);
     setShowConfirmModal(true);
@@ -92,7 +102,6 @@ export default function manageCustomers() {
 
       if (result[0]?.status === "1") {
         toast.success(result[0].message || "Customer deleted successfully!");
-        // ✅ Call fetchCustomers to refresh the data after a successful delete
         await fetchCustomers();
       } else {
         toast.success(result[0].message || "Customer deleted successfully!");
@@ -111,38 +120,92 @@ export default function manageCustomers() {
     setCustomerToDeleteId(null);
   };
 
-  const filtered = user.filter((customer) => {
+  // ✅ NEW: Function to handle column header clicks for sorting
+  const handleSort = (column) => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortColumn(column);
+      setSortDirection("asc");
+    }
+  };
+
+  // ✅ NEW: Apply sorting and filtering logic
+  const sortedAndFilteredCustomers = () => {
     const q = query.trim().toLowerCase();
-    const matchesQuery =
-      customer.Customer_Name?.toLowerCase().includes(q) ||
-      customer.Customer_Email?.toLowerCase().includes(q) ||
-      customer.Customer_Phone?.toLowerCase().includes(q) ||
-      customer.GeneratedStoreID?.toString().includes(q) ||
-      customer.CustomerID?.toString().includes(q);
+    const filteredCustomers = user.filter((customer) => {
+      const matchesQuery =
+        customer.Customer_Name?.toLowerCase().includes(q) ||
+        customer.Customer_Email?.toLowerCase().includes(q) ||
+        customer.Customer_Phone?.toLowerCase().includes(q) ||
+        customer.GeneratedStoreID?.toString().includes(q) ||
+        customer.CustomerID?.toString().includes(q);
 
-    const customerDate = customer.Customer_Date
-      ? new Date(customer.Customer_Date)
-      : null;
-    const start = dateRange.startDate ? new Date(dateRange.startDate) : null;
-    const end = dateRange.endDate ? new Date(dateRange.endDate) : null;
+      const customerDate = customer.Customer_Date
+        ? new Date(customer.Customer_Date)
+        : null;
+      const start = dateRange.startDate ? new Date(dateRange.startDate) : null;
+      const end = dateRange.endDate ? new Date(dateRange.endDate) : null;
 
-    const matchesDate =
-      !start ||
-      (customerDate && customerDate >= start && (!end || customerDate <= end));
+      const matchesDate =
+        !start ||
+        (customerDate && customerDate >= start && (!end || customerDate <= end));
 
-    return matchesQuery && matchesDate;
-  });
+      return matchesQuery && matchesDate;
+    });
+
+    if (sortColumn) {
+      const sorted = [...filteredCustomers].sort((a, b) => {
+        const aValue = a[sortColumn];
+        const bValue = b[sortColumn];
+
+        // Handle null or undefined values
+        if (aValue === null || aValue === undefined) return 1;
+        if (bValue === null || bValue === undefined) return -1;
+
+        // Numeric comparison
+        if (
+          sortColumn === "CustomerID" ||
+          sortColumn === "GeneratedStoreID" ||
+          sortColumn === "Customer_ProductAmount"
+        ) {
+          const numA = Number(aValue);
+          const numB = Number(bValue);
+          return sortDirection === "asc" ? numA - numB : numB - numA;
+        }
+
+        // String comparison
+        const comparison = String(aValue).localeCompare(String(bValue));
+        return sortDirection === "asc" ? comparison : -comparison;
+      });
+      return sorted;
+    }
+
+    return filteredCustomers;
+  };
+
+  const finalCustomers = sortedAndFilteredCustomers();
 
   // Reset to page 1 whenever search query or filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [query, dateRange]);
+  }, [query, dateRange, sortColumn, sortDirection]);
 
   // Pagination logic
-  const totalPages = Math.ceil(filtered.length / customersPerPage);
+  const totalPages = Math.ceil(finalCustomers.length / customersPerPage);
   const indexOfLast = currentPage * customersPerPage;
   const indexOfFirst = indexOfLast - customersPerPage;
-  const currentCustomers = filtered.slice(indexOfFirst, indexOfLast);
+  const currentCustomers = finalCustomers.slice(indexOfFirst, indexOfLast);
+
+  const getSortIcon = (column) => {
+    if (sortColumn !== column) {
+      return <FaSort className="text-gray-400" />;
+    }
+    if (sortDirection === "asc") {
+      return <FaSortUp className="text-indigo-600" />;
+    }
+    return <FaSortDown className="text-indigo-600" />;
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-2">
@@ -252,29 +315,69 @@ export default function manageCustomers() {
                   <table className="w-full border-collapse">
                     <thead>
                       <tr className="text-left text-xs uppercase tracking-wide text-gray-600">
-                        <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
-                          Customer ID
+                        <th
+                          className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0 cursor-pointer"
+                          onClick={() => handleSort("CustomerID")}
+                        >
+                          <div className="flex items-center gap-1">
+                            Customer ID {getSortIcon("CustomerID")}
+                          </div>
                         </th>
-                        <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
-                          Store ID
+                        <th
+                          className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0 cursor-pointer"
+                          onClick={() => handleSort("GeneratedStoreID")}
+                        >
+                          <div className="flex items-center gap-1">
+                            Store ID {getSortIcon("GeneratedStoreID")}
+                          </div>
                         </th>
-                        <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
-                          Customer Name
+                        <th
+                          className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0 cursor-pointer"
+                          onClick={() => handleSort("Customer_Name")}
+                        >
+                          <div className="flex items-center gap-1">
+                            Customer Name {getSortIcon("Customer_Name")}
+                          </div>
                         </th>
-                        <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
-                          Email
+                        <th
+                          className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0 cursor-pointer"
+                          onClick={() => handleSort("Customer_Email")}
+                        >
+                          <div className="flex items-center gap-1">
+                            Email {getSortIcon("Customer_Email")}
+                          </div>
                         </th>
-                        <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
-                          Phone
+                        <th
+                          className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0 cursor-pointer"
+                          onClick={() => handleSort("Customer_Phone")}
+                        >
+                          <div className="flex items-center gap-1">
+                            Phone {getSortIcon("Customer_Phone")}
+                          </div>
                         </th>
-                        <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
-                          Service
+                        <th
+                          className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0 cursor-pointer"
+                          onClick={() => handleSort("service_name")}
+                        >
+                          <div className="flex items-center gap-1">
+                            Service {getSortIcon("service_name")}
+                          </div>
                         </th>
-                        <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
-                          Amount
+                        <th
+                          className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0 cursor-pointer"
+                          onClick={() => handleSort("Customer_ProductAmount")}
+                        >
+                          <div className="flex items-center gap-1">
+                            Amount {getSortIcon("Customer_ProductAmount")}
+                          </div>
                         </th>
-                        <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
-                          Date & Time
+                        <th
+                          className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0 cursor-pointer"
+                          onClick={() => handleSort("Customer_Date")}
+                        >
+                          <div className="flex items-center gap-1">
+                            Date & Time {getSortIcon("Customer_Date")}
+                          </div>
                         </th>
                         <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
                           Actions

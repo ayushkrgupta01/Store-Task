@@ -250,7 +250,8 @@ const StoreDetailsPage = () => {
                 <FaMapMarkerAlt />
               )}
               {renderDataField("City", storeData.CityName, <FaMapMarkerAlt />)}
-              {renderDataField("Total Sales", storeData.SalesByStore, <FaDollarSign />)}
+              {renderDataField("Total Customers", storeData.TotalCustomers, <FaMapMarkerAlt />)}
+              {renderDataField("Total Sales", storeData.TotalSales, <FaDollarSign />)}
               {renderDataField(
                 "PAN Number",
                 storeData.PANNumber,

@@ -9,6 +9,9 @@ import {
   FaTrash,
   FaArrowLeft,
   FaUserFriends,
+  FaSort,
+  FaSortUp,
+  FaSortDown,
 } from "react-icons/fa";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -25,8 +28,10 @@ const AllStores = () => {
   const [query, setQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [showDeletePopup, setShowDeletePopup] = useState(false);
-  // Add selectedStore to state
   const [selectedStore, setSelectedStore] = useState(null);
+  const [sortColumn, setSortColumn] = useState(null);
+  const [sortDirection, setSortDirection] = useState("asc");
+
   const customersPerPage = 10;
   const router = useRouter();
   const [filters, setFilters] = useState({
@@ -67,7 +72,6 @@ const AllStores = () => {
     }
   };
 
-  // Set the selected store and show the popup
   const confirmDelete = (store) => {
     setSelectedStore(store);
     setShowDeletePopup(true);
@@ -131,15 +135,9 @@ const AllStores = () => {
 
     const matchesQuery =
       !q ||
-      String(getValue(store, ["StoreName"]))
-        .toLowerCase()
-        .includes(q) ||
-      String(getValue(store, ["Email"]))
-        .toLowerCase()
-        .includes(q) ||
-      String(getValue(store, ["Phone"]))
-        .toLowerCase()
-        .includes(q) ||
+      String(getValue(store, ["StoreName"])).toLowerCase().includes(q) ||
+      String(getValue(store, ["Email"])).toLowerCase().includes(q) ||
+      String(getValue(store, ["Phone"])).toLowerCase().includes(q) ||
       String(getValue(store, ["StateName", "State", "state"]))
         .toLowerCase()
         .includes(q) ||
@@ -166,8 +164,92 @@ const AllStores = () => {
     return matchesQuery && matchesFilters;
   });
 
+  const handleSort = (column) => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortColumn(column);
+      setSortDirection("asc");
+    }
+    setCurrentPage(1);
+  };
+
+  const getSortIcon = (column) => {
+    if (sortColumn !== column) {
+      return <FaSort className="text-gray-400" />;
+    }
+    return sortDirection === "asc" ? (
+      <FaSortUp className="text-indigo-600" />
+    ) : (
+      <FaSortDown className="text-indigo-600" />
+    );
+  };
+
+  const sortedData = [...filtered].sort((a, b) => {
+    if (!sortColumn) return 0;
+
+    let aValue, bValue;
+
+    switch (sortColumn) {
+      case "storeId":
+        aValue = getValue(a, ["GeneratedStoreID"]);
+        bValue = getValue(b, ["GeneratedStoreID"]);
+        break;
+      case "storeName":
+        aValue = getValue(a, ["StoreName"]);
+        bValue = getValue(b, ["StoreName"]);
+        break;
+      case "email":
+        aValue = getValue(a, ["Email"]);
+        bValue = getValue(b, ["Email"]);
+        break;
+      case "phone":
+        aValue = getValue(a, ["Phone"]);
+        bValue = getValue(b, ["Phone"]);
+        break;
+      case "state":
+        aValue = getValue(a, ["StateName", "State", "state"]);
+        bValue = getValue(b, ["StateName", "State", "state"]);
+        break;
+      case "city":
+        aValue = getValue(a, ["CityName", "City", "city"]);
+        bValue = getValue(b, ["CityName", "City", "city"]);
+        break;
+      case "totalCustomers":
+        aValue = parseInt(getValue(a, ["TotalCustomers"])) || 0;
+        bValue = parseInt(getValue(b, ["TotalCustomers"])) || 0;
+        break;
+      case "totalSales":
+        aValue = parseFloat(getValue(a, ["TotalSales"])) || 0;
+        bValue = parseFloat(getValue(b, ["TotalSales"])) || 0;
+        break;
+      case "createdAt":
+        aValue = new Date(getValue(a, ["CreatedAt"])).getTime() || 0;
+        bValue = new Date(getValue(b, ["CreatedAt"])).getTime() || 0;
+        break;
+      case "pan":
+        aValue = getValue(a, ["PAN", "PANNumber", "PanNo"]);
+        bValue = getValue(b, ["PAN", "PANNumber", "PanNo"]);
+        break;
+      case "aadhar":
+        aValue = getValue(a, ["Aadhar", "AadharNumber", "AadharNo"]);
+        bValue = getValue(b, ["Aadhar", "AadharNumber", "AadharNo"]);
+        break;
+      default:
+        return 0;
+    }
+
+    if (aValue < bValue) {
+      return sortDirection === "asc" ? -1 : 1;
+    }
+    if (aValue > bValue) {
+      return sortDirection === "asc" ? 1 : -1;
+    }
+    return 0;
+  });
+
   const exportToExcel = () => {
-    const dataToExport = filtered.map((store) => ({
+    const dataToExport = sortedData.map((store) => ({
       "Store ID": getValue(store, ["StoreID"]),
       "Store Name": getValue(store, ["StoreName"]),
       Email: getValue(store, ["Email"]),
@@ -195,20 +277,39 @@ const AllStores = () => {
       "Phone",
       "State",
       "City",
+      "Customers",
+      "Total Sales",
+      "Date & Time",
       "PAN",
       "Aadhar",
     ];
-    const tableRows = filtered.map((store) => [
+    const tableRows = sortedData.map((store) => [
       getValue(store, ["GeneratedStoreID"]),
       getValue(store, ["StoreName"]),
       getValue(store, ["Email"]),
       getValue(store, ["Phone"]),
       getValue(store, ["StateName", "State", "state"]),
       getValue(store, ["CityName", "City", "city"]),
+      getValue(store, ["TotalCustomers"]),
+      getValue(store, ["TotalSales"]),
+      (() => {
+        const dateStr = getValue(store, ["CreatedAt"]);
+        if (!dateStr) return "N/A";
+        const date = new Date(dateStr);
+        const formattedDate = date.toLocaleDateString("en-US", {
+          day: "2-digit",
+          month: "long",
+          year: "numeric",
+        });
+        const formattedTime = date.toLocaleTimeString("en-US", {
+          hour: "numeric",
+          minute: "2-digit",
+          hour12: true,
+        });
+        return `${formattedDate}\n${formattedTime}`;
+      })(),
       getValue(store, ["PAN", "PANNumber", "PanNo"]),
       getValue(store, ["Aadhar", "AadharNumber", "AadharNo"]),
-      getValue(store, ["CreatedAt"]),
-      getValue(store, ["SalesByStore"]),
     ]);
 
     autoTable(doc, {
@@ -230,15 +331,18 @@ const AllStores = () => {
         fontSize: 10,
         fontStyle: "bold",
       },
+      columnStyles: {
+        8: { cellWidth: "auto" },
+      },
     });
 
     doc.save("all_stores_data.pdf");
   };
 
-  const totalPages = Math.ceil(filtered.length / customersPerPage);
+  const totalPages = Math.ceil(sortedData.length / customersPerPage);
   const indexOfLast = currentPage * customersPerPage;
   const indexOfFirst = indexOfLast - customersPerPage;
-  const currentCustomers = filtered.slice(indexOfFirst, indexOfLast);
+  const currentCustomers = sortedData.slice(indexOfFirst, indexOfLast);
 
   const handlePageChange = (page) => {
     if (page >= 1 && page <= totalPages) {
@@ -355,35 +459,104 @@ const AllStores = () => {
                 <table className="w-full border-collapse min-w-[800px]">
                   <thead>
                     <tr className="text-left text-xs uppercase tracking-wide text-gray-600">
-                      <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
-                        Store ID
+                      <th
+                        className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0 cursor-pointer hover:bg-gray-200 transition-colors"
+                        onClick={() => handleSort("storeId")}
+                      >
+                        <div className="flex items-center gap-1">
+                          Store ID
+                          {getSortIcon("storeId")}
+                        </div>
                       </th>
-                      <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
-                        Store Name
+                      <th
+                        className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0 cursor-pointer hover:bg-gray-200 transition-colors"
+                        onClick={() => handleSort("storeName")}
+                      >
+                        <div className="flex items-center gap-1">
+                          Store Name
+                          {getSortIcon("storeName")}
+                        </div>
                       </th>
-                      <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
-                        Email
+                      <th
+                        className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0 cursor-pointer hover:bg-gray-200 transition-colors"
+                        onClick={() => handleSort("email")}
+                      >
+                        <div className="flex items-center gap-1">
+                          Email
+                          {getSortIcon("email")}
+                        </div>
                       </th>
-                      <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
-                        Phone
+                      <th
+                        className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0 cursor-pointer hover:bg-gray-200 transition-colors"
+                        onClick={() => handleSort("phone")}
+                      >
+                        <div className="flex items-center gap-1">
+                          Phone
+                          {getSortIcon("phone")}
+                        </div>
                       </th>
-                      <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
-                        State
+                      <th
+                        className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0 cursor-pointer hover:bg-gray-200 transition-colors"
+                        onClick={() => handleSort("state")}
+                      >
+                        <div className="flex items-center gap-1">
+                          State
+                          {getSortIcon("state")}
+                        </div>
                       </th>
-                      <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
-                        City
+                      <th
+                        className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0 cursor-pointer hover:bg-gray-200 transition-colors"
+                        onClick={() => handleSort("city")}
+                      >
+                        <div className="flex items-center gap-1">
+                          City
+                          {getSortIcon("city")}
+                        </div>
                       </th>
-                      <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
-                        Total Sales
+                      <th
+                        className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0 cursor-pointer hover:bg-gray-200 transition-colors"
+                        onClick={() => handleSort("totalCustomers")}
+                      >
+                        <div className="flex items-center gap-1">
+                          Customers
+                          {getSortIcon("totalCustomers")}
+                        </div>
                       </th>
-                      <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
-                        Date & Time
+                      <th
+                        className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0 cursor-pointer hover:bg-gray-200 transition-colors"
+                        onClick={() => handleSort("totalSales")}
+                      >
+                        <div className="flex items-center gap-1">
+                          Total Sales
+                          {getSortIcon("totalSales")}
+                        </div>
                       </th>
-                      <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
-                        PAN
+                      <th
+                        className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0 cursor-pointer hover:bg-gray-200 transition-colors"
+                        onClick={() => handleSort("createdAt")}
+                      >
+                        <div className="flex items-center gap-1">
+                          Date & Time
+                          {getSortIcon("createdAt")}
+                        </div>
                       </th>
-                      <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
-                        Aadhar
+                      <th
+                        className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0 cursor-pointer hover:bg-gray-200 transition-colors"
+                        onClick={() => handleSort("pan")}
+                      >
+                        <div className="flex items-center gap-1">
+                          PAN
+                          {getSortIcon("pan")}
+                        </div>
+                      </th>
+                      <th
+                        className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0 cursor-pointer hover:bg-gray-200 transition-colors"
+                        onClick={() => handleSort("aadhar")}
+                      >
+                        <div className="flex items-center gap-1">
+                          Aadhar
+                          {getSortIcon("aadhar")}
+                        </div>
                       </th>
                       <th className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
                         Actions
@@ -416,7 +589,10 @@ const AllStores = () => {
                             {getValue(store, ["CityName", "City", "city"])}
                           </td>
                           <td className="p-3 text-sm border-t truncate">
-                            {getValue(store, ["SalesByStore"])}
+                            {getValue(store, ["TotalCustomers"])}
+                          </td>
+                          <td className="p-3 text-sm border-t truncate">
+                            {getValue(store, ["TotalSales"])}
                           </td>
                           <td className="p-3 text-sm border-t">
                             {(() => {
