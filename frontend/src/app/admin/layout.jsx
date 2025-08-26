@@ -62,7 +62,7 @@ export default function Layout({ children }) {
               </svg>
             </button>
             <div className="flex items-center gap-3">
-              <img src="/LogoLight.jpeg" alt="Logo" className="h-8 w-8 rounded-full" />
+              <img src="/LogoLight.jpeg" alt="Logo" className="rounded-full h-14 w-14" />
               <span className="font-semibold text-gray-800 hidden sm:inline">Admin Dashboard</span>
             </div>
             <div className="flex items-center gap-4">

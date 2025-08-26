@@ -154,7 +154,7 @@ const AdminLoginForm = () => {
                 <img
                   src="/LogoLight.jpeg"
                   alt="Logo"
-                  className="my-auto rounded-full size-16"
+                  className="my-auto rounded-full h-14 w-14"
                 />
                 <span className="ml-3 text-sm md:text-lg font-sans font-bold text-gray-700">
                   Store Management System
