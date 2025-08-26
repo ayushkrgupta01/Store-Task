@@ -158,7 +158,7 @@ try {
                   Store Management System
                 </span>
               </div>
-              <div className="text-xs font-bold text-gray-600">
+              <div className="text-xs font-bold font-sans text-gray-600">
                 Admin Portal
               </div>
             </div>
@@ -181,7 +181,7 @@ try {
                       className="size-32 mx-auto rounded-full shadow-lg border-4 border-white"
                     />
                   </div>
-                  <h1 className="text-3xl font-bold text-gray-800 mb-2">
+                  <h1 className="text-3xl font-bold text-gray-800 mb-2 font-sans">
                     Admin Login
                   </h1>
                   <p className="text-gray-600">
