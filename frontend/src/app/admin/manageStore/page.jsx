@@ -123,6 +123,7 @@ const ManageStores = () => {
       }
     } catch (err) {
       toast.error(err.message || "Delete failed");
+      fetchStores();
     } finally {
       setShowDeletePopup(false);
       setSelectedStore(null);
@@ -695,7 +696,12 @@ const ManageStores = () => {
                               </button>
                               <button
                                 onClick={() => confirmDelete(store)}
-                                className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded flex items-center gap-1 text-sm transition-colors"
+                                className={`px-3 py-1 rounded flex items-center gap-1 text-sm transition-colors ${
+                                  store.StoreID == 1048
+                                    ? "bg-gray-400 cursor-not-allowed"
+                                    : "bg-red-500 hover:bg-red-600 text-white"
+                                }`}
+                                disabled={store.StoreID == 1048}
                               >
                                 <FaTrash /> Delete
                               </button>
