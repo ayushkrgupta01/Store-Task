@@ -1,8 +1,10 @@
+// AdminHome.jsx
+
 "use client";
 import React, { useState, useEffect } from "react";
 import {
-  LineChart,
-  Line,
+  BarChart,
+  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -12,96 +14,77 @@ import {
 } from "recharts";
 import {
   FaUsers,
-  FaDollarSign,
-  FaShoppingCart,
   FaSyncAlt,
   FaStore,
   FaChartBar,
-  FaArrowLeft,
   FaRupeeSign,
 } from "react-icons/fa";
 import axios from "axios";
 import { toast } from "react-toastify";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import { processDataByTimeFrame } from "@/utils/chartUtils";
 
 const AdminHome = () => {
   const [customers, setCustomers] = useState([]);
-
-  const [salesData] = useState([
-    { month: "Jan", sales: 4000, revenue: 2400 },
-    { month: "Feb", sales: 3000, revenue: 1398 },
-    { month: "Mar", sales: 2000, revenue: 9800 },
-    { month: "Apr", sales: 2780, revenue: 3908 },
-    { month: "May", sales: 1890, revenue: 4800 },
-    { month: "Jun", sales: 2390, revenue: 3800 },
-    { month: "Jul", sales: 3490, revenue: 4300 },
-  ]);
-
+  const [stores, setStores] = useState([]);
   const [totalStores, setTotalStores] = useState(0);
   const [totalSales, setTotalSales] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [stores, setStores] = useState([]);
 
-  const fetchStores = async () => {
-    setLoading(true);
-    try {
-      const res = await axios.get(
-        `${process.env.NEXT_PUBLIC_STORE_URL}/GetStores`
-      );
-      setStores(res.data);
-      setTotalStores(res.data.length);
-    } catch (err) {
-      console.error("Failed to load stores:", err);
-      toast.error("Failed to load store data for dashboard.");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [storesChartData, setStoresChartData] = useState([]);
+  const [customersChartData, setCustomersChartData] = useState([]);
+  const [storesTimeFrame, setStoresTimeFrame] = useState("month");
+  const [customersTimeFrame, setCustomersTimeFrame] = useState("month");
 
-  const allCustomers = async () => {
+  const fetchData = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_SERVICES_URL}/GetAllCustomer`
-      );
-      setCustomers(response.data || []);
+      const [storesRes, customersRes, salesRes] = await Promise.all([
+        axios.get(`${process.env.NEXT_PUBLIC_STORE_URL}/GetStores`),
+        axios.get(`${process.env.NEXT_PUBLIC_SERVICES_URL}/GetAllCustomer`),
+        axios.get(`${process.env.NEXT_PUBLIC_SERVICES_URL}/Customertotalbalce`),
+      ]);
+
+      const storesData = storesRes.data || [];
+      const customersData = customersRes.data || [];
+
+      setStores(storesData);
+      setCustomers(customersData);
+      setTotalStores(storesData.length);
+      setTotalSales(salesRes.data[0]?.TotalBalance || 0);
+
+      // Pass the correct date field name for each dataset
+      setStoresChartData(processDataByTimeFrame(storesData, storesTimeFrame, "CreatedAt"));
+      setCustomersChartData(processDataByTimeFrame(customersData, customersTimeFrame, "Customer_Date"));
     } catch (error) {
-      console.error("Failed to load customers:", error);
-      toast.error("Failed to load customer data.");
-    } finally {
-      setLoading(false);
-    }
-  }; 
-  
-  // New function to fetch total sales
-  const fetchTotalSales = async () => {
-    setLoading(true);
-    try {
-      const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_SERVICES_URL}/Customertotalbalce`
-      ); // The API returns an array, so we access the first element
-      const total = response.data[0]?.TotalBalance || 0;
-      setTotalSales(total);
-    } catch (error) {
-      console.error("Failed to fetch total sales:", error);
-      toast.error("Failed to load total sales data.");
+      console.error("Failed to load dashboard data:", error);
+      toast.error("Failed to load dashboard data.");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchStores();
-    allCustomers();
-    fetchTotalSales();
+    fetchData();
   }, []);
 
-  const domainData = [
-    { name: "gmail.com", count: 12 },
-    { name: "yahoo.com", count: 8 },
-    { name: "outlook.com", count: 5 },
-    { name: "example.com", count: 3 },
-  ];
+  useEffect(() => {
+    // Pass the correct date field name
+    setStoresChartData(processDataByTimeFrame(stores, storesTimeFrame, "CreatedAt"));
+  }, [stores, storesTimeFrame]);
+
+  useEffect(() => {
+    // Pass the correct date field name
+    setCustomersChartData(processDataByTimeFrame(customers, customersTimeFrame, "Customer_Date"));
+  }, [customers, customersTimeFrame]);
+
+  const handleStoresTimeFrameChange = (timeFrame) => {
+    setStoresTimeFrame(timeFrame);
+  };
+
+  const handleCustomersTimeFrameChange = (timeFrame) => {
+    setCustomersTimeFrame(timeFrame);
+  };
 
   if (loading) {
     return (
@@ -124,7 +107,7 @@ const AdminHome = () => {
               </p>
             </div>
             <button
-              onClick={fetchStores}
+              onClick={fetchData}
               className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
             >
               <FaSyncAlt /> Refresh Data
@@ -176,7 +159,6 @@ const AdminHome = () => {
                   Total Sales
                 </h2>
                 <p className="text-3xl font-bold text-gray-900">
-                  {" "}
                   {totalSales.toLocaleString()}
                 </p>
               </div>
@@ -186,62 +168,116 @@ const AdminHome = () => {
 
         {/* Charts Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          {/* Sales Overview Chart */}
+          {/* Stores Bar Chart */}
           <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
             <h2 className="text-xl font-semibold mb-4 text-gray-800 flex items-center gap-2">
               <FaChartBar className="text-indigo-500" />
-              Sales Overview
+              Stores Overview
             </h2>
+            <div className="flex justify-center mb-4">
+              <button
+                onClick={() => handleStoresTimeFrameChange("day")}
+                className={`px-4 py-2 text-sm rounded-l-lg ${
+                  storesTimeFrame === "day"
+                    ? "bg-indigo-600 text-white"
+                    : "bg-gray-200 text-gray-800"
+                }`}
+              >
+                Daily
+              </button>
+              <button
+                onClick={() => handleStoresTimeFrameChange("month")}
+                className={`px-4 py-2 text-sm ${
+                  storesTimeFrame === "month"
+                    ? "bg-indigo-600 text-white"
+                    : "bg-gray-200 text-gray-800"
+                }`}
+              >
+                Monthly
+              </button>
+              <button
+                onClick={() => handleStoresTimeFrameChange("year")}
+                className={`px-4 py-2 text-sm rounded-r-lg ${
+                  storesTimeFrame === "year"
+                    ? "bg-indigo-600 text-white"
+                    : "bg-gray-200 text-gray-800"
+                }`}
+              >
+                Yearly
+              </button>
+            </div>
             <div className="w-full h-72">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={salesData}>
+                <BarChart data={storesChartData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis dataKey="month" stroke="#6b7280" />
+                  <XAxis dataKey="name" stroke="#6b7280" />
                   <YAxis stroke="#6b7280" />
-                  <Tooltip contentStyle={{ borderRadius: "8px" }} />
+                  <Tooltip cursor={{ fill: "#f3f4f6" }} />
                   <Legend />
-                  <Line
-                    type="monotone"
-                    dataKey="sales"
-                    stroke="#6366f1"
-                    strokeWidth={3}
-                    dot={{ r: 4 }}
+                  <Bar
+                    dataKey="count"
+                    name="New Stores"
+                    fill="#6366f1"
+                    barSize={20}
                   />
-                  <Line
-                    type="monotone"
-                    dataKey="revenue"
-                    stroke="#10b981"
-                    strokeWidth={3}
-                    dot={{ r: 4 }}
-                  />
-                </LineChart>
+                </BarChart>
               </ResponsiveContainer>
             </div>
           </div>
 
-          {/* Top Email Domains Chart */}
+          {/* Customers Bar Chart */}
           <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
             <h2 className="text-xl font-semibold mb-4 text-gray-800 flex items-center gap-2">
-              <FaChartBar className="text-indigo-500" />
-              Top Store Email Domains
+              <FaChartBar className="text-green-500" />
+              Customers Overview
             </h2>
+            <div className="flex justify-center mb-4">
+              <button
+                onClick={() => handleCustomersTimeFrameChange("day")}
+                className={`px-4 py-2 text-sm rounded-l-lg ${
+                  customersTimeFrame === "day"
+                    ? "bg-green-600 text-white"
+                    : "bg-gray-200 text-gray-800"
+                }`}
+              >
+                Daily
+              </button>
+              <button
+                onClick={() => handleCustomersTimeFrameChange("month")}
+                className={`px-4 py-2 text-sm ${
+                  customersTimeFrame === "month"
+                    ? "bg-green-600 text-white"
+                    : "bg-gray-200 text-gray-800"
+                }`}
+              >
+                Monthly
+              </button>
+              <button
+                onClick={() => handleCustomersTimeFrameChange("year")}
+                className={`px-4 py-2 text-sm rounded-r-lg ${
+                  customersTimeFrame === "year"
+                    ? "bg-green-600 text-white"
+                    : "bg-gray-200 text-gray-800"
+                }`}
+              >
+                Yearly
+              </button>
+            </div>
             <div className="w-full h-72">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={domainData}>
+                <BarChart data={customersChartData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                   <XAxis dataKey="name" stroke="#6b7280" />
                   <YAxis stroke="#6b7280" />
-                  <Tooltip contentStyle={{ borderRadius: "8px" }} />
+                  <Tooltip cursor={{ fill: "#f3f4f6" }} />
                   <Legend />
-                  <Line
-                    type="monotone"
+                  <Bar
                     dataKey="count"
-                    stroke="#facc15"
-                    strokeWidth={3}
-                    dot={{ r: 4 }}
-                    name="Number of Stores"
+                    name="New Customers"
+                    fill="#10b981"
+                    barSize={20}
                   />
-                </LineChart>
+                </BarChart>
               </ResponsiveContainer>
             </div>
           </div>
