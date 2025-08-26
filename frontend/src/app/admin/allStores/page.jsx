@@ -683,7 +683,7 @@ const AllStores = () => {
                                 className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded flex items-center gap-1 text-sm transition-colors"
                               >
                                 <FaUserFriends />
-                                Total Customers
+                                Store-Wise Customers
                               </button>
                               <button
                                 onClick={() => confirmDelete(store)}

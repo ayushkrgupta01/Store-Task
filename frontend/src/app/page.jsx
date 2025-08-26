@@ -154,7 +154,7 @@ try {
                   alt="Logo"
                   className="my-auto rounded-full size-16"
                 />
-                <span className="ml-3 text-sm md:text-xl font-sans font-bold text-gray-700">
+                <span className="ml-3 text-sm md:text-lg font-sans font-bold text-gray-700">
                   Store Management System
                 </span>
               </div>
