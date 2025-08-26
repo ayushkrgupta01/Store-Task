@@ -16,6 +16,7 @@ import {
   FaCalendar,
   FaLink,
   FaImage,
+  FaRupeeSign,
 } from "react-icons/fa";
 
 // Component to display a single image attachment with preview and error handling
@@ -251,7 +252,7 @@ const StoreDetailsPage = () => {
               )}
               {renderDataField("City", storeData.CityName, <FaMapMarkerAlt />)}
               {renderDataField("Total Customers", storeData.TotalCustomers, <FaMapMarkerAlt />)}
-              {renderDataField("Total Sales", storeData.TotalSales, <FaDollarSign />)}
+              {renderDataField("Total Sales", storeData.TotalSales, <FaRupeeSign />)}
               {renderDataField(
                 "PAN Number",
                 storeData.PANNumber,

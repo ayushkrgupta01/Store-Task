@@ -2,7 +2,7 @@
 
 import { useParams, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { FaArrowLeft, FaUser, FaEnvelope, FaPhone, FaFileAlt, FaLink, FaCalendarAlt, FaIdCard, FaStore, FaIdBadge, FaSpinner } from 'react-icons/fa';
+import { FaArrowLeft, FaUser, FaEnvelope, FaPhone, FaFileAlt, FaLink, FaCalendarAlt, FaIdCard, FaStore, FaIdBadge, FaSpinner, FaRupeeSign } from 'react-icons/fa';
 
 // Constants for backend and image URLs
 const BACKEND_BASE_URL = process.env.NEXT_PUBLIC_SERVICES_URL;
@@ -130,7 +130,7 @@ export default function CustomerDetails() {
             <div className="space-y-4">
               {renderDataField('Aadhar Number', user.Customer_AadharNumber, <FaFileAlt />)}
               {renderDataField('PAN Number', user.Customer_PanNumber, <FaFileAlt />)}
-              {renderDataField('Product Amount', `₹${user.Customer_ProductAmount}`, <FaFileAlt />)}
+              {renderDataField('Product Amount', `₹${user.Customer_ProductAmount}`, <FaRupeeSign />)}
               {renderDataField('Date', user.Customer_Date ? new Date(user.Customer_Date).toLocaleDateString() : 'N/A', <FaCalendarAlt />)}
               {renderDataField('Service', user.service_name, <FaFileAlt />)}
               {renderDataField('Generated Store ID', user.GeneratedStoreID, <FaIdBadge />)}

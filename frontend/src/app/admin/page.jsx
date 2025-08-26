@@ -18,6 +18,7 @@ import {
   FaStore,
   FaChartBar,
   FaArrowLeft,
+  FaRupeeSign,
 } from "react-icons/fa";
 import axios from "axios";
 import { toast } from "react-toastify";
@@ -168,7 +169,7 @@ const AdminHome = () => {
           <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 hover:shadow-2xl transition-shadow">
             <div className="flex items-center space-x-4">
               <div className="w-12 h-12 bg-gradient-to-r from-yellow-500 to-yellow-600 rounded-xl flex items-center justify-center">
-                <FaDollarSign className="text-2xl text-white" />
+                <FaRupeeSign className="text-2xl text-white" />
               </div>
               <div>
                 <h2 className="text-lg font-medium text-gray-600">

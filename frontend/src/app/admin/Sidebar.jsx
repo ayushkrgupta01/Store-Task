@@ -57,9 +57,9 @@ const Sidebar = ({ onNavigate = () => {} }) => {
         {/* Title at the top of the sidebar */}
         <div className="text-center py-4">
           <img
-            src="/LogoLight.jpeg"
+            src="/SidebarLightLogo.png"
             alt="Logo"
-            className="h-10 w-10 rounded-full mx-auto mb-2"
+            className="rounded-full h-10 mx-auto mb-4"
           />
           <h2 className="text-xl font-semibold text-gray-800 dark:text-white">
             Admin Panel
