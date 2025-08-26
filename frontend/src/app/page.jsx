@@ -25,6 +25,8 @@ const AdminLoginForm = () => {
   const { login, isAuthenticated, loading } = useAdminAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // State to hold the on-page error message
+  const [errorMessage, setErrorMessage] = useState("");
 
   // Redirect if already logged in
   React.useEffect(() => {
@@ -51,6 +53,8 @@ const AdminLoginForm = () => {
 
   const onSubmit = async (values, { resetForm, setSubmitting }) => {
     setIsSubmitting(true);
+    // Clear any previous error messages
+    setErrorMessage("");
     try {
       const res = await axios.post(
         `${process.env.NEXT_PUBLIC_ADMIN_URL}/Login`,
@@ -67,30 +71,25 @@ const AdminLoginForm = () => {
         data.length > 0 &&
         data[0].StatusCode === "1"
       ) {
-        // ✅ Parse EmployeeDetails correctly
-      let storeId = null;
-try {
-  let employeeDetails = data[0].EmployeeDetails;
+        let storeId = null;
+        try {
+          let employeeDetails = data[0].EmployeeDetails;
 
-  // 👇 First parse once
-  if (typeof employeeDetails === "string") {
-    employeeDetails = JSON.parse(employeeDetails);
-  }
+          if (typeof employeeDetails === "string") {
+            employeeDetails = JSON.parse(employeeDetails);
+          }
 
-  // 👇 If still stringified (SQL sometimes double-encodes FOR JSON PATH)
-  if (typeof employeeDetails === "string") {
-    employeeDetails = JSON.parse(employeeDetails);
-  }
+          if (typeof employeeDetails === "string") {
+            employeeDetails = JSON.parse(employeeDetails);
+          }
 
-  if (Array.isArray(employeeDetails) && employeeDetails.length > 0) {
-    storeId = employeeDetails[0].StoreID ?? null;
-  }
-} catch (err) {
-  console.error("Error parsing EmployeeDetails:", err);
-}
+          if (Array.isArray(employeeDetails) && employeeDetails.length > 0) {
+            storeId = employeeDetails[0].StoreID ?? null;
+          }
+        } catch (err) {
+          console.error("Error parsing EmployeeDetails:", err);
+        }
 
-
-        // ✅ Save username + StoreID + loginTime
         const adminInfo = {
           username: values.adminId,
           storeId,
@@ -112,23 +111,26 @@ try {
           router.push("/admin");
         }, 2000);
       } else {
-        toast.error(
-          data[0]?.msg || "Login failed. Please check your credentials.",
-          {
-            position: "top-right",
-            autoClose: 4000,
-          }
-        );
+        const msg =
+          data[0]?.msg || "Login failed. Please check your credentials.";
+        // Set the on-page error message
+        setErrorMessage(msg);
+        // Display the toast message
+        toast.error(msg, {
+          position: "top-right",
+          autoClose: 4000,
+        });
       }
     } catch (error) {
       console.error("Login error:", error);
-      toast.error(
-        "Network error. Please check your connection and try again.",
-        {
-          position: "top-right",
-          autoClose: 4000,
-        }
-      );
+      const msg = "Network error. Please check your connection and try again.";
+      // Set the on-page error message
+      setErrorMessage(msg);
+      // Display the toast message
+      toast.error(msg, {
+        position: "top-right",
+        autoClose: 4000,
+      });
     } finally {
       setIsSubmitting(false);
       setSubmitting(false);
@@ -188,6 +190,13 @@ try {
                     Welcome back! Please sign in to your account.
                   </p>
                 </div>
+
+                {/* On-page error message display */}
+                {errorMessage && (
+                  <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-md text-sm">
+                    {errorMessage}
+                  </div>
+                )}
 
                 {/* Form */}
                 <Formik
