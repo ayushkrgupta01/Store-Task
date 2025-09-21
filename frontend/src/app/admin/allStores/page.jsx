@@ -134,6 +134,10 @@ const AllStores = () => {
   };
 
   const filtered = stores.filter((store) => {
+    // Skip the store with StoreID 1048
+    if (store.StoreID == 1048) {
+      return false;
+    }
     const q = query.trim().toLowerCase();
     const stateFilter = filters.state.toLowerCase();
     const cityFilter = filters.city.toLowerCase();
